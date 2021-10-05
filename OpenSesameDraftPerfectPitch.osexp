@@ -1,7 +1,7 @@
 ---
 API: 2.1
 OpenSesame: 3.3.10
-Platform: posix
+Platform: nt
 ---
 set width 1024
 set uniform_coordinates yes
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
+set experiment_path "C:/Users/Panos/Desktop/usermodelsactual/AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -70,15 +70,21 @@ define inline_script learning_session_setup
 	__end__
 	set _prepare ""
 
-define inline_script present_trial
+define inline_script masking_script
 	set description "Executes Python code"
 	___run__
 	trial_start_time = clock.time()
 	
 	# Get next fact from the model
-	next_fact, new = m.get_next_fact(current_time = trial_start_time)
-	prompt = next_fact.question
-	answer = next_fact.answer
+	# next_factinst, newinst = minstruments.get_next_fact(current_time = trial_start_time)
+	# promptinst = next_factinst.question
+	# answerinst = next_factinst.answer
+	
+	#next instrument
+	next_factinst, newinst = minstruments.get_next_fact(current_time = trial_start_time)
+	promptinst = next_factinst.question
+	answerinst = next_factinst.answer
+	
 	
 	# Show prompt
 	my_canvas = Canvas()
@@ -92,9 +98,9 @@ define inline_script present_trial
 	# #OPTIONS FOR MASKING
 	# first we want to clear auditory memory by using some noise
 	# OPTIION 1 using the synth - terrible, not very effective I think
-	bad_sound = Synth(osc="white_noise", length=800, attack=800, decay=500)
-	bad_sound.volume = 0.25
-	bad_sound.play()
+	# bad_sound = Synth(osc="white_noise", length=800, attack=800, decay=500)
+	# bad_sound.volume = 0.25
+	# bad_sound.play()
 	
 	## OPTION 2 - the lick (lol) - right register... but also annoying!
 	# can we use different masking sounds in the same set to prevent annoyance?
@@ -103,12 +109,151 @@ define inline_script present_trial
 	Sampler(src).play()
 	
 	# probably too long
-	clock.sleep(3250)
+	clock.sleep(2000)
 	
 	'''
-	#then present the tone
+	
+	src = pool[promptinst+".wav"]
+	Sampler(src).play()
+	
+	if newinst:
+		my_canvas.text(answerinst, y = 50, font_size = 20)
+	my_canvas.prepare()
+	my_canvas.show()
 	
 	
+	#here we need to add code to give possitive /or negative feedback for the instrument slimpstampen model
+	
+	
+	# Listen for keyboard input and show keypresses on screen as they occur
+	my_keyboard = Keyboard()
+	keyboard_response = ""
+	erased_answer = False
+	rt = float("inf")
+	
+	# Keep listening for key presses until the user presses Enter
+	while True:
+		key, time = my_keyboard.get_key()
+		
+		# The first keypress determines the response time
+		if keyboard_response == "" and not erased_answer:
+			rt = clock.time() - trial_start_time
+		
+		if key == "return":
+			break
+			
+		# press r for repeating the note
+		if key == "/":
+			if key == "/":
+				Sampler(src).play()
+			keyboard_response = keyboard_response[:-1]
+			# If the answer is completely erased, the RT is no longer informative
+			if keyboard_response == "":
+				erased_answer = True
+				rt = float("inf")
+		
+		elif key == "space":
+			keyboard_response += " "
+		
+		else:
+			keyboard_response += my_keyboard.to_chr(key)
+	
+		# Update what's on screen'
+		my_canvas.clear()
+		#my_canvas.text(prompt, font_size = 30)
+		if newinst:
+			my_canvas.text(answerinst, y = 50, font_size = 20)
+		my_canvas.text(keyboard_response, y = 100)
+		my_canvas.prepare()
+		my_canvas.show()
+	
+	
+	# Check if the response is correct
+	correct = keyboard_response == answerinst
+	
+	# Log response
+	response = Response(next_factinst, trial_start_time, rt, correct)
+	minstruments.register_response(response) 
+	
+	# Show feedback
+	feedback_color = "green" if correct else "red"
+	my_canvas.text(keyboard_response, y = 100, color = feedback_color)
+	if not correct:
+		my_canvas.text(answerinst, y = 150)
+	my_canvas.prepare()
+	my_canvas.show()
+	clock.sleep(var.feedback_duration)
+	
+	# Clear the screen between trials
+	my_canvas.clear()
+	my_canvas.prepare()
+	my_canvas.show()
+	clock.sleep(var.inter_trial_interval)
+	
+	# Check if time is up
+	if clock.time() - var.session_start_time >= var.session_duration:
+		var.time_up = True
+		
+	# Increment trial number
+	var.trial_num += 1
+	__end__
+	set _prepare ""
+
+define inline_script present_trial
+	set description "Executes Python code"
+	___run__
+	trial_start_time = clock.time()
+	
+	# Get next fact from the model
+	next_fact, new = m.get_next_fact(current_time = trial_start_time)
+	prompt = next_fact.question
+	answer = next_fact.answer
+	
+	# #next instrument
+	# next_fact, new = minstruments.get_next_fact(current_time = trial_start_time)
+	# prompt = next_fact.question
+	# answer = next_fact.answer
+	
+	
+	# Show prompt
+	my_canvas = Canvas()
+	
+	#my_canvas.text(prompt, font_size = 30)
+	# we don't want a text prompt, we want a sampler prompt
+	# file pool is the folder named __pool__ in this folder
+	
+	
+	# TODO:
+	# #OPTIONS FOR MASKING
+	# first we want to clear auditory memory by using some noise
+	# OPTIION 1 using the synth - terrible, not very effective I think
+	# bad_sound = Synth(osc="white_noise", length=800, attack=800, decay=500)
+	# bad_sound.volume = 0.25
+	# bad_sound.play()
+	
+	## OPTION 2 - the lick (lol) - right register... but also annoying!
+	# can we use different masking sounds in the same set to prevent annoyance?
+	'''
+	src = pool['mask.wav']
+	Sampler(src).play()
+	
+	# probably too long
+	clock.sleep(2000)
+	
+	'''
+	
+	# src = pool[promptinst+".wav"]
+	# Sampler(src).play()
+	
+	# if newinst:
+	# 	my_canvas.text(answerinst, y = 50, font_size = 20)
+	# my_canvas.prepare()
+	# my_canvas.show()
+	
+	
+	#here we need to add code to give possitive /or negative feedback for the instrument slimpstampen model
+	
+	#actual note present
 	prompt_name = prompt+'.wav'
 	src = pool[prompt_name]
 	Sampler(src).play()
@@ -136,8 +281,8 @@ define inline_script present_trial
 			break
 			
 		# press r for repeating the note
-		if key == "backspace" or key == "r":
-			if key == "r":
+		if key == "/":
+			if key == "/":
 				Sampler(src).play()
 			keyboard_response = keyboard_response[:-1]
 			# If the answer is completely erased, the RT is no longer informative
@@ -190,7 +335,10 @@ define inline_script present_trial
 	# Increment trial number
 	var.trial_num += 1
 	__end__
-	set _prepare ""
+	___prepare__
+	import numpy as np
+	import os
+	__end__
 
 define inline_script save_data
 	set description "Executes Python code"
@@ -205,7 +353,7 @@ define inline_script slimstampen_setup
 	set description "Executes Python code"
 	___run__
 	m = SpacingModel()
-	
+	minstruments = SpacingModel()
 	# Add some study facts to the model (you could also read them from a CSV file)
 	'''facts = [Fact(1, "hello", "bonjour"),
 			Fact(2, "dog", "chien"),
@@ -217,6 +365,17 @@ define inline_script slimstampen_setup
 			Fact(8, "bottle", "bouteille")]
 	'''
 	# doing this by hand for now (only whole pitches)
+	factsinstrument = [Fact(1,"accordeon", "accordeon"),
+			 Fact(2,"clarinet", "clarinet"),
+		     Fact(3,"drums", "drums"),
+			 Fact(4, "electric_guitar", "electric guitar"),
+			 Fact(5, "flute", "flute"),
+			 Fact(6, "french horn","french horn"),
+			 Fact(7, "harmonica", "harmonica"),
+			 Fact(8, "harp", "harp"),
+			Fact(9, "maraccas", "maraccas"),
+			Fact(10, "piano", "piano")]
+	
 	facts = [Fact(1,"e3", "e"),
 			 Fact(2,"f3", "f"),
 		     Fact(3,"g3", "g"),
@@ -228,6 +387,8 @@ define inline_script slimstampen_setup
 	
 	for fact in facts:
 		m.add_fact(fact)
+	for fact in factsinstrument:
+		minstruments.add_fact(fact)
 	__end__
 	___prepare__
 	from __future__ import division
@@ -502,6 +663,7 @@ define inline_script slimstampen_setup
 define sequence trial_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
+	run masking_script always
 	run present_trial always
 
 define loop while_there_is_time_left
