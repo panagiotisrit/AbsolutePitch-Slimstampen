@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "/Users/ludivanleeuwen/github/user-models-2122"
+set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -92,20 +92,20 @@ define inline_script present_trial
 	# #OPTIONS FOR MASKING
 	# first we want to clear auditory memory by using some noise
 	# OPTIION 1 using the synth - terrible, not very effective I think
-	'''bad_sound = Synth(osc="white_noise", length=800, attack=800, decay=500)
+	bad_sound = Synth(osc="white_noise", length=800, attack=800, decay=500)
 	bad_sound.volume = 0.25
-	bad_sound.play()'''
+	bad_sound.play()
 	
 	## OPTION 2 - the lick (lol) - right register... but also annoying!
 	# can we use different masking sounds in the same set to prevent annoyance?
-	
+	'''
 	src = pool['mask.wav']
 	Sampler(src).play()
 	
 	# probably too long
 	clock.sleep(3250)
 	
-	
+	'''
 	#then present the tone
 	
 	
