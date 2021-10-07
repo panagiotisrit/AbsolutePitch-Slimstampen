@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "C:/Users/Panos/Desktop/usermodelsactual/AbsolutePitch-Slimstampen"
+set experiment_path "C:\\Users\\Panos\\Desktop\\usermodelsactual\\AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -36,20 +36,63 @@ set clock_backend psycho
 set canvas_backend psycho
 set background black
 
+define loop Perfect_pitch_loop
+	set source table
+	set repeat 1
+	set order sequential
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	setcycle 0 empty_column ""
+	run new_sequence_1
+
+define loop TestingTrial
+	set source_file ""
+	set source table
+	set repeat 1
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 empty_column ""
+	run Testingblock
+
+define sketchpad Testing_instructions
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0.0 y=0.0 z_index=0
+
+define inline_script Testingblock
+	set description "Executes Python code"
+	___run__
+	#####
+	
+	
+	
+	
+	var.time_up = False
+	# reset the clock
+	var.session_start_time = clock.time()
+	__end__
+	set _prepare ""
+
 define sequence experiment
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 	run slimstampen_setup always
 	run instructions always
 	run learning_session_setup always
-	run while_there_is_time_left always
+	run Perfect_pitch_loop always
 	run save_data always
 
 define sketchpad instructions
 	set duration keypress
 	set description "Displays stimuli"
-	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Instructions go here. Press any key to begin." x=0 y=0 z_index=0
-	draw textline center=1 color="#fd8008" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Press r to repeat the note" x=-64 y=64 z_index=0
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Instructions go here. Press any key to begin." x=0.0 y=-32.0 z_index=0
+	draw textline center=1 color="#fd8008" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Press 1 to repeat the fact" x=0.0 y=0.0 z_index=0
 
 define inline_script learning_session_setup
 	set description "Executes Python code"
@@ -114,7 +157,9 @@ define inline_script masking_script
 	'''
 	
 	src = pool[promptinst+".wav"]
-	Sampler(src).play()
+	mysampler =Sampler(src,volume = 0.2)
+	mysampler.play()
+	mysampler.wait()
 	
 	if newinst:
 		my_canvas.text(answerinst, y = 50, font_size = 20)
@@ -142,9 +187,9 @@ define inline_script masking_script
 		if key == "return":
 			break
 			
-		# press r for repeating the note
-		if key == "/":
-			if key == "/":
+		# press 1 for repeating the note
+		if key == "1" or key =="backspace":
+			if key == "1":
 				Sampler(src).play()
 			keyboard_response = keyboard_response[:-1]
 			# If the answer is completely erased, the RT is no longer informative
@@ -198,6 +243,34 @@ define inline_script masking_script
 	var.trial_num += 1
 	__end__
 	set _prepare ""
+
+define loop new_loop
+	set source_file ""
+	set source table
+	set repeat 1
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 empty_column ""
+	run ""
+
+define sequence new_sequence
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+
+define sequence new_sequence_1
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run while_there_is_time_left always
+	run Testing_instructions always
+	run Testingblock always
+
+define sketchpad new_sketchpad
+	set duration keypress
+	set description "Displays stimuli"
 
 define inline_script present_trial
 	set description "Executes Python code"
@@ -281,8 +354,8 @@ define inline_script present_trial
 			break
 			
 		# press r for repeating the note
-		if key == "/":
-			if key == "/":
+		if key == "1" or key == "backspace":
+			if key == "1":
 				Sampler(src).play()
 			keyboard_response = keyboard_response[:-1]
 			# If the answer is completely erased, the RT is no longer informative
@@ -352,6 +425,7 @@ define inline_script save_data
 define inline_script slimstampen_setup
 	set description "Executes Python code"
 	___run__
+	import random
 	m = SpacingModel()
 	minstruments = SpacingModel()
 	# Add some study facts to the model (you could also read them from a CSV file)
@@ -370,11 +444,13 @@ define inline_script slimstampen_setup
 		     Fact(3,"drums", "drums"),
 			 Fact(4, "electric_guitar", "electric guitar"),
 			 Fact(5, "flute", "flute"),
-			 Fact(6, "french horn","french horn"),
+			 Fact(6, "frenchhorn","french horn"),
 			 Fact(7, "harmonica", "harmonica"),
 			 Fact(8, "harp", "harp"),
 			Fact(9, "maraccas", "maraccas"),
 			Fact(10, "piano", "piano")]
+			
+	random.shuffle(factsinstrument)
 	
 	facts = [Fact(1,"e3", "e"),
 			 Fact(2,"f3", "f"),
@@ -384,6 +460,8 @@ define inline_script slimstampen_setup
 			 Fact(6, "c4", "c"),
 			 Fact(7, "d4", "d"),
 			 Fact(8, "e4", "e")]
+	
+	random.shuffle(facts)
 	
 	for fact in facts:
 		m.add_fact(fact)
