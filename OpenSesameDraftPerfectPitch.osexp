@@ -1,7 +1,7 @@
 ---
 API: 2.1
 OpenSesame: 3.3.10
-Platform: nt
+Platform: posix
 ---
 set width 1024
 set uniform_coordinates yes
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "C:\\Users\\Panos\\Desktop\\usermodelsactual\\AbsolutePitch-Slimstampen"
+set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -38,12 +38,13 @@ set background black
 
 define loop Perfect_pitch_loop
 	set source table
-	set repeat 1
+	set repeat 2
 	set order sequential
 	set description "Repeatedly runs another item"
 	set cycles 1
 	set continuous no
 	set break_if_on_first yes
+	set break_if never
 	setcycle 0 empty_column ""
 	run new_sequence_1
 
@@ -63,21 +64,228 @@ define loop TestingTrial
 define sketchpad Testing_instructions
 	set duration keypress
 	set description "Displays stimuli"
-	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0.0 y=0.0 z_index=0
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0 y=0 z_index=0
 
 define inline_script Testingblock
 	set description "Executes Python code"
 	___run__
 	#####
 	
+	### combine the two lists of facts
+	
+	fact_list_to_test = []
+	
+	# extra randomizer
+	random.shuffle(facts)
+	random.shuffle(factsinstrument)
+	i = 0
+	while i < len(facts) and i < len(factsinstrument): #merging the two lists counterwise
+	    fact_list_to_test.append((factsinstrument[i], "instrument"))
+	    fact_list_to_test.append((facts[i], "pitch"))
+	    i += 1
+	
+	if i >= len(facts):    # bad, probably
+	    fact_list_to_test = fact_list_to_test + factsinstrument[i:-1]
+	else:
+	    fact_list_to_test = fact_list_to_test + facts[i:-1]
 	
 	
-	
-	var.time_up = False
-	# reset the clock
-	var.session_start_time = clock.time()
+	for fact in fact_list_to_test[0:2]:    # should test all
+	    test_fact, condition = fact
+	    trial_start_time = clock.time()
+	    src = pool[test_fact.question+".wav"]
+	    volume_set = 0.2
+	    if condition == "pitch":
+	        volume_set = 1
+	    mysampler = Sampler(src,volume = volume_set)
+	    mysampler.play()
+	    mysampler.wait()
+	    
+	    #if newinst:
+	    #	my_canvas.text(answerinst, y = 50, font_size = 20)
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    
+	    
+	    #here we need to add code to give possitive /or negative feedback for the instrument slimpstampen model
+	    
+	    
+	    # Listen for keyboard input and show keypresses on screen as they occur
+	    my_keyboard = Keyboard()
+	    keyboard_response = ""
+	    erased_answer = False
+	    rt = float("inf")
+	    
+	    # Keep listening for key presses until the user presses Enter
+	    while True:
+	    	key, time = my_keyboard.get_key()
+	    	
+	    	# The first keypress determines the response time
+	    	if keyboard_response == "" and not erased_answer:
+	    		rt = clock.time() - trial_start_time
+	    	
+	    	if key == "return":
+	    		break
+	    		
+	    	# press 1 for repeating the note
+	    	if key == "1" or key =="backspace":
+	    		if key == "1":
+	    			Sampler(src).play()
+	    		keyboard_response = keyboard_response[:-1]
+	    		# If the answer is completely erased, the RT is no longer informative
+	    		if keyboard_response == "":
+	    			erased_answer = True
+	    			rt = float("inf")
+	    	
+	    	elif key == "space":
+	    		keyboard_response += " "
+	    	
+	    	else:
+	    		keyboard_response += my_keyboard.to_chr(key)
+	    
+	    	# Update what's on screen'
+	    	my_canvas.clear()
+	    	#my_canvas.text(prompt, font_size = 30)
+	    	#if newinst:
+	    	#	my_canvas.text(pitch.answer, y = 50, font_size = 20)
+	    	my_canvas.text(keyboard_response, y = 100)
+	    	my_canvas.prepare()
+	    	my_canvas.show()
+	    
+	    
+	    # Check if the response is correct
+	    correct = keyboard_response == test_fact.answer
+	    
+	    # Log response
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "test")
+	    if condition == "pitch":
+	        m.register_response(response) 
+	    elif condition == "instrument":
+	        minstruments.register_response(response) 
+	    
+	    # Show feedback
+	    feedback_color = "green" if correct else "red"
+	    my_canvas.text(keyboard_response, y = 100, color = feedback_color)
+	    if not correct:
+	    	my_canvas.text(test_fact.answer, y = 150)
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    clock.sleep(var.feedback_duration)
+	    
+	    # Clear the screen between trials
+	    my_canvas.clear()
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    clock.sleep(var.inter_trial_interval)
+	    var.trial_num += 1
+	    
+	    
+	    
+	    var.time_up = False
+	    
+	    
+	    
 	__end__
 	set _prepare ""
+
+define inline_script TestingblockInstrument
+	set description "Executes Python code"
+	___run__
+	#####
+	
+	
+	for instrument in factsinstrument[4:5]:
+		trial_start_time = clock.time()
+		src = pool[instrument.question+".wav"]
+		mysampler =Sampler(src,volume = 0.2)
+		mysampler.play()
+		mysampler.wait()
+		
+		#if newinst:
+		#	my_canvas.text(answerinst, y = 50, font_size = 20)
+		my_canvas.prepare()
+		my_canvas.show()
+		
+		
+		#here we need to add code to give possitive /or negative feedback for the instrument slimpstampen model
+		
+		
+		# Listen for keyboard input and show keypresses on screen as they occur
+		my_keyboard = Keyboard()
+		keyboard_response = ""
+		erased_answer = False
+		rt = float("inf")
+		
+		# Keep listening for key presses until the user presses Enter
+		while True:
+			key, time = my_keyboard.get_key()
+			
+			# The first keypress determines the response time
+			if keyboard_response == "" and not erased_answer:
+				rt = clock.time() - trial_start_time
+			
+			if key == "return":
+				break
+				
+			# press 1 for repeating the note
+			if key == "1" or key =="backspace":
+				if key == "1":
+					Sampler(src).play()
+				keyboard_response = keyboard_response[:-1]
+				# If the answer is completely erased, the RT is no longer informative
+				if keyboard_response == "":
+					erased_answer = True
+					rt = float("inf")
+			
+			elif key == "space":
+				keyboard_response += " "
+			
+			else:
+				keyboard_response += my_keyboard.to_chr(key)
+		
+			# Update what's on screen'
+			my_canvas.clear()
+			#my_canvas.text(prompt, font_size = 30)
+			#if newinst:
+			#	my_canvas.text(answerinst, y = 50, font_size = 20)
+			my_canvas.text(keyboard_response, y = 100)
+			my_canvas.prepare()
+			my_canvas.show()
+		
+		
+		# Check if the response is correct
+		correct = keyboard_response == instrument.answer
+		
+		# Log response
+		response = Response(instrument, trial_start_time, rt, correct)
+		minstruments.register_response(response) 
+		
+		# Show feedback
+		feedback_color = "green" if correct else "red"
+		my_canvas.text(keyboard_response, y = 100, color = feedback_color)
+		if not correct:
+			my_canvas.text(instrument.answer, y = 150)
+		my_canvas.prepare()
+		my_canvas.show()
+		clock.sleep(var.feedback_duration)
+		
+		# Clear the screen between trials
+		my_canvas.clear()
+		my_canvas.prepare()
+		my_canvas.show()
+		clock.sleep(var.inter_trial_interval)
+		
+		
+		#var.time_up = False
+		# reset the clock
+		#var.session_start_time = clock.time()
+	__end__
+	set _prepare ""
+
+define sketchpad Training_instructions
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=-96 y=-32 z_index=0
 
 define sequence experiment
 	set flush_keyboard yes
@@ -91,8 +299,23 @@ define sequence experiment
 define sketchpad instructions
 	set duration keypress
 	set description "Displays stimuli"
-	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Instructions go here. Press any key to begin." x=0.0 y=-32.0 z_index=0
-	draw textline center=1 color="#fd8008" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Press 1 to repeat the fact" x=0.0 y=0.0 z_index=0
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Instructions go here. Press any key to begin." x=0 y=-32 z_index=0
+	draw textline center=1 color="#fd8008" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Press 1 to repeat the fact" x=0 y=0 z_index=0
+
+define loop instruments_while_items_left
+	set source_file ""
+	set source table
+	set repeat 1
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 3
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 instrument piano
+	setcycle 1 instrument drums
+	setcycle 2 instrument harp
+	run ""
 
 define inline_script learning_session_setup
 	set description "Executes Python code"
@@ -107,9 +330,12 @@ define inline_script learning_session_setup
 	var.trial_num = 1
 	
 	# Settings
-	var.session_duration = 100000
+	var.session_duration = 5000
 	var.feedback_duration = 800
 	var.inter_trial_interval = 200
+	
+	## testing phase
+	var.end = False
 	__end__
 	set _prepare ""
 
@@ -217,7 +443,7 @@ define inline_script masking_script
 	correct = keyboard_response == answerinst
 	
 	# Log response
-	response = Response(next_factinst, trial_start_time, rt, correct)
+	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "train")
 	minstruments.register_response(response) 
 	
 	# Show feedback
@@ -264,6 +490,7 @@ define sequence new_sequence
 define sequence new_sequence_1
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
+	run Training_instructions always
 	run while_there_is_time_left always
 	run Testing_instructions always
 	run Testingblock always
@@ -271,6 +498,20 @@ define sequence new_sequence_1
 define sketchpad new_sketchpad
 	set duration keypress
 	set description "Displays stimuli"
+
+define loop pitch_while_there_are_items_left
+	set source table
+	set repeat 1
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 3
+	set continuous no
+	set break_if_on_first yes
+	set break_if "[end] = yes"
+	setcycle 0 pitch e3
+	setcycle 1 pitch f3
+	setcycle 2 pitch g3
+	run ""
 
 define inline_script present_trial
 	set description "Executes Python code"
@@ -383,7 +624,7 @@ define inline_script present_trial
 	correct = keyboard_response == answer
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct)
+	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "train")
 	m.register_response(response) 
 	
 	# Show feedback
@@ -417,8 +658,10 @@ define inline_script save_data
 	set description "Executes Python code"
 	___run__
 	# Write the SlimStampen data to the OpenSesame log file
-	dat = m.export_data()
+	dat = m.export_data(header_true=True)
+	dat2 = minstruments.export_data(header_true = False)
 	log.write(dat)
+	log.write(dat2)
 	__end__
 	set _prepare ""
 
@@ -475,7 +718,7 @@ define inline_script slimstampen_setup
 	from collections import namedtuple
 	
 	Fact = namedtuple("Fact", "fact_id, question, answer")
-	Response = namedtuple("Response", "fact, start_time, rt, correct")
+	Response = namedtuple("Response", "fact, start_time, rt, correct, condition, test")
 	Encounter = namedtuple("Encounter", "activation, time, reaction_time, decay")
 	
 	
@@ -708,7 +951,7 @@ define inline_script slimstampen_setup
 	        return(min(rt, max_rt))
 	
 	
-	    def export_data(self, path = None):
+	    def export_data(self, path = None, header_true = True):
 	        # type: (str) -> DataFrame
 	        """
 	        Save the response data to the specified csv file, and return a copy of the pandas DataFrame.
@@ -729,13 +972,14 @@ define inline_script slimstampen_setup
 	        # Add trial number column
 	        dat.index.name = "trial"
 	        dat.index = dat.index + 1
+	            
 	
 	        # Save to CSV file if a path was specified, otherwise return the CSV-formatted output
 	        if path is not None:
-	            dat.to_csv(path, encoding="UTF-8")
+	            dat.to_csv(path, header=header_true, encoding="UTF-8")
 	            return(dat)
 	        
-	        return(dat.to_csv())
+	        return(dat.to_csv(header=header_true))
 	__end__
 
 define sequence trial_sequence
