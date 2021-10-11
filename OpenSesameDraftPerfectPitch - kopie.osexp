@@ -45,27 +45,29 @@ define inline_script Experiment_Class
 	set description "Executes Python code"
 	___run__
 	class Experiment:
-	    def __init__(self):
-	        self.keyboard_input = Keyboard_Input()
-	        self.output = Output()
+	    def __init__(self, interface):
+	        self.interface = interface
 	        self.spacing_model = SpacingModel()
 	        
 	    def load_csv(self, file_name):
 	        with open(pool[file_name]) as f:
 	            lines = f.readlines()
 	        column_names = lines[0].split(',')[1:]
-	        items_ = [{column_names[i]: cell for i, cell in enumerate(line.split(','))} for line in lines[1:]]
+	        items_ = [{column_names[i]: cell \
+	                   for i, cell in enumerate(line.split(','))} \
+	                   for line in lines[1:]]
 	        random.shuffle(items_)
 	        for i, item in enumerate(items_):
 	            fact = Fact(i, item['cue'], item['answer'])
 	            m.add_fact(fact)
 	    
 	    def get_next_item(self):
-	        self.item = self.spacing_model.get_next_fact(current_time = self.current_trial_start_time)
+	        self.item = self.spacing_model.get_next_fact( \
+	                        current_time = self.current_trial_start_time)
 	        return self.item
 	    
 	    def present_cue(self):
-	        self.output.play_audio(self.item.question)
+	        self.interface.play_audio(self.item.question)
 	        # if self.item.cue.cue_type == 'audio':
 	        #     self.output.play_audio(self.cue.text)
 	        # elif self.item.cue.cue_type == 'text':
@@ -100,10 +102,10 @@ define inline_script Keyboard_Input
 	set description "Executes Python code"
 	___run__
 	class Keyboard_Input:
-	    def __init__(self, display):
+	    def __init__(self, interface):
 	        self.keyboard = Keyboard()
 	        self.text = ""
-	        self.display = display
+	        self.interface = interface
 	        
 	    def set_to_init_values(self):
 	        self.n_presses = 0
@@ -131,20 +133,20 @@ define inline_script Keyboard_Input
 	    def parse_key_press(self, key):
 	        if key == 'return': True
 	        elif key == 'backspace': self.remove_char_from_end()
-	        elif key == '1': self.display.repeat_cue()
+	        elif key == '1': self.interface.repeat_cue()
 	        elif key == 'space': self.add_char_to_text(' ')
 	        else: self.add_char_to_text(self.keyboard.to_chr(key))
 	        return False
 	        
 	    def take_input(self):
 	        is_done = False
-	        display.lock_text()
+	        self.interface.lock_text()
 	        while is_done:
 	            key, _ = keyboard.get_key()
 	            register_times(key)
 	            is_done = self.parse_key_press(key)
-	            display.show_text_on_canvas(self.text, y= 100)
-	        display.unlock_text()
+	            self.interface.show_text_on_canvas(self.text, y= 100)
+	        self.interface.unlock_text()
 	        return self.text, self.t_first_input
 	__end__
 	set _prepare ""
@@ -155,56 +157,6 @@ define sequence Mask_Item
 	run Start_Trial_Timer always
 	run Get_Item always
 	run Query_Participant always
-
-define inline_script Output_Class
-	set description "Executes Python code"
-	___run__
-	class Output:
-	    def __init__(self):
-	        self.current_screen = 'none'
-	        self.keyboard = Keyboard()
-	        self.currently_displayed_texts = []
-	        
-	    def create_canvas(self):
-	        self.canvas = Canvas()
-	        self.current_screen = 'canvas'
-	        
-	    def add_text_to_canvas(self, text):
-	        self.canvas.text(text.string, y= text.y, font_size= text.font_size, color= text.color)
-	        
-	    def add_lock_text(self, text_list):
-	        self.locked_text += text_list
-	        
-	    def lock_text(self):
-	        self.locked_text = self.currently_displayed_texts
-	        
-	    def unlock_text(self):
-	        self.locked_text = []
-	        
-	    def show_texts_on_canvas(self, text_list):
-	        if self.current_screen != 'canvas': self.create_canvas()
-	        self.canvas.clear()
-	        self.currently_displayed_texts = []
-	        
-	        text_list += self.locked_text
-	        
-	        for text in text_list:
-	            self.add_text_to_canvas(text)
-	            
-	        self.currently_displayed_texts = text_list
-	        
-	        self.canvas.prepare()
-	        self.canvas.show()
-	        
-	    def show_text_on_canvas(self, text, y= 0, font_size= 20, color= 'white'):
-	        text_obj = Text(text, y, font_size, color)
-	        show_texts_on_canvas(self, [text_obj])
-	        
-	    def play_audio(self, file_name):
-	        src = pool[file_name]
-	        Sampler(src).play()
-	__end__
-	set _prepare ""
 
 define loop Perfect_pitch_loop
 	set source table
@@ -519,7 +471,7 @@ define inline_script TestingblockInstrument
 	__end__
 	set _prepare ""
 
-define inline_script Text
+define inline_script Text_Class
 	set description "Executes Python code"
 	___run__
 	class Text:
@@ -540,15 +492,72 @@ define sequence Trial_Item
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 
+define inline_script UI_Class
+	set description "Executes Python code"
+	___run__
+	class UI:
+	    def __init__(self):
+	        self.current_screen = 'none'
+	        self.keyboard = Keyboard(self)
+	        self.currently_displayed_texts = []
+	        
+	    def create_canvas(self):
+	        self.canvas = Canvas()
+	        self.current_screen = 'canvas'
+	        
+	    def add_text_to_canvas(self, text):
+	        self.canvas.text(text.string, y= text.y, \
+	                         font_size= text.font_size, color= text.color)
+	        
+	    def add_lock_text(self, text_list):
+	        self.locked_text += text_list
+	        
+	    def lock_text(self):
+	        self.locked_text = self.currently_displayed_texts
+	        
+	    def unlock_text(self):
+	        self.locked_text = []
+	        
+	    def show_texts_on_canvas(self, text_list):
+	        if self.current_screen != 'canvas': self.create_canvas()
+	        self.canvas.clear()
+	        self.currently_displayed_texts = []
+	        
+	        text_list += self.locked_text
+	        
+	        for text in text_list:
+	            self.add_text_to_canvas(text)
+	            
+	        self.currently_displayed_texts = text_list
+	        
+	        self.canvas.prepare()
+	        self.canvas.show()
+	        
+	    def show_text_on_canvas(self, text, y= 0, font_size= 20, color= 'white'):
+	        text_obj = Text(text, y, font_size, color)
+	        show_texts_on_canvas(self, [text_obj])
+	        
+	    def repeat_cue(self):
+	        pass
+	        
+	    def play_audio(self, file_name):
+	        src = pool[file_name]
+	        Sampler(src).play()
+	
+	    def get_text_input(self):
+	        return self.keyboard.take_input()
+	__end__
+	set _prepare ""
+
 define sequence experiment
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 	run slimstampen_setup always
 	run instructions always
 	run learning_session_setup always
-	run Text always
+	run Text_Class always
 	run Keyboard_Input always
-	run Output_Class always
+	run UI_Class always
 	run Experiment_Class always
 	run Perfect_pitch_loop always
 	run save_data always
@@ -1249,6 +1258,7 @@ define sequence trial_sequence
 	run present_trial always
 
 define loop while_there_is_time_left
+	set source_file ""
 	set source table
 	set repeat 1000
 	set order random
