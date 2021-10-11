@@ -36,6 +36,176 @@ set clock_backend psycho
 set canvas_backend psycho
 set background black
 
+define inline_script Base_
+	set description "Executes Python code"
+	set _run ""
+	set _prepare ""
+
+define inline_script Experiment_Class
+	set description "Executes Python code"
+	___run__
+	class Experiment:
+	    def __init__(self):
+	        self.keyboard_input = Keyboard_Input()
+	        self.output = Output()
+	        self.spacing_model = SpacingModel()
+	        
+	    def load_csv(self, file_name):
+	        with open(pool[file_name]) as f:
+	            lines = f.readlines()
+	        column_names = lines[0].split(',')[1:]
+	        items_ = [{column_names[i]: cell for i, cell in enumerate(line.split(','))} for line in lines[1:]]
+	        random.shuffle(items_)
+	        for i, item in enumerate(items_):
+	            fact = Fact(i, item['cue'], item['answer'])
+	            m.add_fact(fact)
+	    
+	    def get_next_item(self):
+	        self.item = self.spacing_model.get_next_fact(current_time = self.current_trial_start_time)
+	        return self.item
+	    
+	    def present_cue(self):
+	        self.output.play_audio(self.item.question)
+	        # if self.item.cue.cue_type == 'audio':
+	        #     self.output.play_audio(self.cue.text)
+	        # elif self.item.cue.cue_type == 'text':
+	        #     text = Text(self.item.cue.text, 50)
+	        #     self.output.show_texts_on_screen([text])
+	    
+	    def show_correct_answer(self):
+	        text = Text(item.correct_answer, y= 50)
+	        self.output.show_texts_on_canvas([text])
+	    
+	    def run_one_item(self):
+	        self.current_trial_start_time = clock.time()
+	        self.get_next_item()
+	        self.present_cue()
+	        if item.first_presentation: self.show_correct_answer()
+	        response, rt = keyboard_input.take_input()
+	        correct = response == self.cue.answer
+	        
+	__end__
+	set _prepare ""
+
+define inline_script Get_Item
+	set description "Executes Python code"
+	___run__
+	next_fact_inst, new_inst = m_instruments.get_next_fact(current_time = trial_start_time)
+	prompt_inst = next_fact_inst.question
+	answer_inst = next_fact_inst.answer
+	__end__
+	set _prepare ""
+
+define inline_script Keyboard_Input
+	set description "Executes Python code"
+	___run__
+	class Keyboard_Input:
+	    def __init__(self, display):
+	        self.keyboard = Keyboard()
+	        self.text = ""
+	        self.display = display
+	        
+	    def set_to_init_values(self):
+	        self.n_presses = 0
+	        self.text = ""
+	        self.t_first_input = 0
+	        self.t_last_empty = 0
+	        self.t_return = 0
+	        
+	    def register_times(self, key):
+	        t = clock.time()
+	        if not self.n_presses and not self.is_ctrl_chr(key):
+	            self.t_first_input = t
+	        if not self.text and not self.is_ctrl_chr(key):
+	            self.t_last_empty = t
+	        if key == 'return':
+	            self.t_return = t
+	        
+	    def add_char_to_end(self, char):
+	        self.text += char
+	        
+	    def remove_char_from_end(self):
+	        if self.text == '': return
+	        self.text = self.text[:-1]
+	    
+	    def parse_key_press(self, key):
+	        if key == 'return': True
+	        elif key == 'backspace': self.remove_char_from_end()
+	        elif key == '1': self.display.repeat_cue()
+	        elif key == 'space': self.add_char_to_text(' ')
+	        else: self.add_char_to_text(self.keyboard.to_chr(key))
+	        return False
+	        
+	    def take_input(self):
+	        is_done = False
+	        display.lock_text()
+	        while is_done:
+	            key, _ = keyboard.get_key()
+	            register_times(key)
+	            is_done = self.parse_key_press(key)
+	            display.show_text_on_canvas(self.text, y= 100)
+	        display.unlock_text()
+	        return self.text, self.t_first_input
+	__end__
+	set _prepare ""
+
+define sequence Mask_Item
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Start_Trial_Timer always
+	run Get_Item always
+	run Query_Participant always
+
+define inline_script Output_Class
+	set description "Executes Python code"
+	___run__
+	class Output:
+	    def __init__(self):
+	        self.current_screen = 'none'
+	        self.keyboard = Keyboard()
+	        self.currently_displayed_texts = []
+	        
+	    def create_canvas(self):
+	        self.canvas = Canvas()
+	        self.current_screen = 'canvas'
+	        
+	    def add_text_to_canvas(self, text):
+	        self.canvas.text(text.string, y= text.y, font_size= text.font_size, color= text.color)
+	        
+	    def add_lock_text(self, text_list):
+	        self.locked_text += text_list
+	        
+	    def lock_text(self):
+	        self.locked_text = self.currently_displayed_texts
+	        
+	    def unlock_text(self):
+	        self.locked_text = []
+	        
+	    def show_texts_on_canvas(self, text_list):
+	        if self.current_screen != 'canvas': self.create_canvas()
+	        self.canvas.clear()
+	        self.currently_displayed_texts = []
+	        
+	        text_list += self.locked_text
+	        
+	        for text in text_list:
+	            self.add_text_to_canvas(text)
+	            
+	        self.currently_displayed_texts = text_list
+	        
+	        self.canvas.prepare()
+	        self.canvas.show()
+	        
+	    def show_text_on_canvas(self, text, y= 0, font_size= 20, color= 'white'):
+	        text_obj = Text(text, y, font_size, color)
+	        show_texts_on_canvas(self, [text_obj])
+	        
+	    def play_audio(self, file_name):
+	        src = pool[file_name]
+	        Sampler(src).play()
+	__end__
+	set _prepare ""
+
 define loop Perfect_pitch_loop
 	set source table
 	set repeat 2
@@ -47,6 +217,73 @@ define loop Perfect_pitch_loop
 	set break_if never
 	setcycle 0 empty_column ""
 	run new_sequence_1
+
+define inline_script Query_Participant
+	set description "Executes Python code"
+	___run__
+	my_canvas = Canvas()
+	
+	src = pool[promptinst+".wav"]
+	
+	mysampler = Sampler(src,volume = 0.2)
+	
+	mysampler.play()
+	mysampler.wait()
+	
+	if newinst:
+		my_canvas.text(answerinst, y = 50, font_size = 20)
+	my_canvas.prepare()
+	my_canvas.show()
+	
+	my_keyboard = Keyboard()
+	keyboard_response = ""
+	erased_answer = False
+	rt = float("inf")
+	
+	# Keep listening for key presses until the user presses Enter
+	while True:
+		key, time = my_keyboard.get_key()
+		
+		# The first keypress determines the response time
+		if keyboard_response == "" and not erased_answer:
+			rt = clock.time() - trial_start_time
+		
+		if key == "return":
+			break
+			
+		# press 1 for repeating the note
+		if key == "1" or key =="backspace":
+			if key == "1":
+				Sampler(src).play()
+			keyboard_response = keyboard_response[:-1]
+			# If the answer is completely erased, the RT is no longer informative
+			if keyboard_response == "":
+				erased_answer = True
+				rt = float("inf")
+		
+		elif key == "space":
+			keyboard_response += " "
+		
+		else:
+			keyboard_response += my_keyboard.to_chr(key)
+	
+		# Update what's on screen'
+		my_canvas.clear()
+		#my_canvas.text(prompt, font_size = 30)
+		if newinst:
+			my_canvas.text(answerinst, y = 50, font_size = 20)
+		my_canvas.text(keyboard_response, y = 100)
+		my_canvas.prepare()
+		my_canvas.show()
+	__end__
+	set _prepare ""
+
+define inline_script Start_Trial_Timer
+	set description "Executes Python code"
+	___run__
+	trial_start_time = clock.time()
+	__end__
+	set _prepare ""
 
 define loop TestingTrial
 	set source_file ""
@@ -282,10 +519,26 @@ define inline_script TestingblockInstrument
 	__end__
 	set _prepare ""
 
+define inline_script Text
+	set description "Executes Python code"
+	___run__
+	class Text:
+	    def __init__(self, string, y= 0, font_size= 20, color= 'white'):
+	        self.string = string
+	        self.y = y
+	        self.font_size = font_size
+	        self.color = color
+	__end__
+	set _prepare ""
+
 define sketchpad Training_instructions
 	set duration keypress
 	set description "Displays stimuli"
 	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=-96 y=-32 z_index=0
+
+define sequence Trial_Item
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
 
 define sequence experiment
 	set flush_keyboard yes
@@ -293,6 +546,10 @@ define sequence experiment
 	run slimstampen_setup always
 	run instructions always
 	run learning_session_setup always
+	run Text always
+	run Keyboard_Input always
+	run Output_Class always
+	run Experiment_Class always
 	run Perfect_pitch_loop always
 	run save_data always
 
@@ -385,7 +642,7 @@ define inline_script masking_script
 	src = pool[promptinst+".wav"]
 	mysampler =Sampler(src,volume = 0.2)
 	mysampler.play()
-	#mysampler.wait()
+	mysampler.wait()
 	
 	if newinst:
 		my_canvas.text(answerinst, y = 50, font_size = 20)
@@ -671,7 +928,7 @@ define inline_script slimstampen_setup
 	___run__
 	import random
 	m = SpacingModel()
-	minstruments = SpacingModel()
+	m_instruments = SpacingModel()
 	# Add some study facts to the model (you could also read them from a CSV file)
 	'''facts = [Fact(1, "hello", "bonjour"),
 			Fact(2, "dog", "chien"),
@@ -710,7 +967,7 @@ define inline_script slimstampen_setup
 	for fact in facts:
 		m.add_fact(fact)
 	for fact in factsinstrument:
-		minstruments.add_fact(fact)
+		m_instruments.add_fact(fact)
 	__end__
 	___prepare__
 	from __future__ import division
@@ -986,6 +1243,8 @@ define inline_script slimstampen_setup
 define sequence trial_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
+	run Mask_Item always
+	run Trial_Item always
 	run masking_script always
 	run present_trial always
 

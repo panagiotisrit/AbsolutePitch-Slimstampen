@@ -1,0 +1,11 @@
+trial,start_time,rt,correct,condition,test,fact_id,question,answer,alpha
+1,22719.825799998944,1928.8744000004954,True,pitch,train,6,c4,c,0.3
+2,36076.15349999833,1692.5113999968744,False,pitch,test,2,f3,f,0.3
+3,61121.13769999996,inf,True,pitch,train,6,c4,c,0.3
+4,72506.73929999903,1997.9853999975603,False,pitch,test,2,f3,f,0.3
+
+1,9640.726400000858,10591.975499999535,True,instrument,train,9,maraccas,maraccas,0.3
+2,28360.941200000525,6247.762799997872,True,instrument,test,8,harp,harp,0.3
+3,42710.900400001265,17233.737499998824,False,instrument,train,9,maraccas,maraccas,0.3
+4,64873.11359999876,6087.51669999765,False,instrument,test,6,frenchhorn,french horn,0.3
+
