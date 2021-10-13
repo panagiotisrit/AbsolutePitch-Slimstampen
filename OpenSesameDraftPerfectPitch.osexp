@@ -353,7 +353,7 @@ define inline_script Testingblock_2
 	    fact_list_to_test = fact_list_to_test + factsRelative[i:-1]
 	
 	
-	for fact in fact_list_to_test[0:4]:    # NOW TESTS TWO FACTS
+	for fact in fact_list_to_test[0:2]:    # NOW TESTS TWO FACTS
 	    test_fact, condition = fact
 	    trial_start_time = clock.time()
 	    
@@ -1177,6 +1177,7 @@ define inline_script save_data
 	dat3 = mRelative.export_data(header_true = False)
 	log.write(dat)
 	log.write(dat2)
+	log.write(dat3)
 	__end__
 	set _prepare ""
 
