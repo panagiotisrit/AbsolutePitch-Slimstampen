@@ -1,7 +1,7 @@
 ---
 API: 2.1
 OpenSesame: 3.3.10
-Platform: nt
+Platform: posix
 ---
 set width 1024
 set uniform_coordinates yes
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "C:\\Users\\Gebruiker\\Documents\\University\\User_Models\\AbsolutePitch-Slimstampen"
+set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -38,7 +38,7 @@ set background black
 
 define loop Perfect_pitch_loop
 	set source table
-	set repeat 2
+	set repeat 1
 	set order sequential
 	set description "Repeatedly runs another item"
 	set cycles 1
@@ -47,6 +47,18 @@ define loop Perfect_pitch_loop
 	set break_if never
 	setcycle 0 empty_column ""
 	run new_sequence_1
+
+define loop Relative_pitch_loop
+	set source table
+	set repeat 1
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 empty_column ""
+	run new_sequence_2_2
 
 define loop TestingTrial
 	set source_file ""
@@ -62,6 +74,11 @@ define loop TestingTrial
 	run Testingblock
 
 define sketchpad Testing_instructions
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0 y=0 z_index=0
+
+define sketchpad Testing_instructions_2
 	set duration keypress
 	set description "Displays stimuli"
 	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0 y=0 z_index=0
@@ -282,7 +299,189 @@ define inline_script TestingblockInstrument
 	__end__
 	set _prepare ""
 
+define inline_script Testingblock_2
+	set description "Executes Python code"
+	___run__
+	#####
+	
+	### combine the two lists of facts
+	
+	def get_two_note_names(answer, second_note):
+	    all_notes = ['a3', 'a-3', 'b3', 'c3', 'c-3', 'd3', 'd-3', 'e3', 'f3', 'f-3', 'g3', 'g-3',
+	                 'a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4',
+	                 'a5', 'a-5', 'b5', 'c5', 'c-5', 'd5', 'd-5', 'e5', 'f5', 'f-5', 'g5', 'g-5']
+	
+	
+	    if str("asc") in answer:  # interval is ascending so we need to start low:
+		    first_list = ['a3', 'a-3', 'b3', 'c3', 'c-3', 'd3', 'd-3', 'e3', 'f3', 'f-3', 'g3', 'g-3',
+	                 'a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4']
+		    asc = 1
+	    else:
+		    first_list = ['a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4',
+	                    'a5', 'a-5', 'b5', 'c5', 'c-5', 'd5', 'd-5', 'e5', 'f5', 'f-5', 'g5', 'g-5']
+		    asc = -1
+	
+	    first_note_instant = random.choice(first_list)
+	
+	    index_first_note = all_notes.index(first_note_instant)
+	
+	    if str("octave") in answer:
+		    index_second_note = index_first_note + asc*12
+	    else:
+		    index_second_note = index_first_note + int(second_note)
+		
+	    second_note_instant = all_notes[index_second_note]
+	    return first_note_instant, second_note_instant
+	
+	
+	    
+	
+	fact_list_to_test = []
+	
+	# extra randomizer
+	random.shuffle(factsRelative)
+	random.shuffle(factsinstrument)
+	i = 0
+	while i < len(factsRelative) and i < len(factsinstrument): #merging the two lists counterwise
+	    fact_list_to_test.append((factsinstrument[i], "instrument"))
+	    fact_list_to_test.append((factsRelative[i], "relative"))
+	    i += 1
+	
+	if i >= len(factsRelative):    # bad, probably
+	    fact_list_to_test = fact_list_to_test + factsinstrument[i:-1]
+	else:
+	    fact_list_to_test = fact_list_to_test + factsRelative[i:-1]
+	
+	
+	for fact in fact_list_to_test[0:4]:    # NOW TESTS TWO FACTS
+	    test_fact, condition = fact
+	    trial_start_time = clock.time()
+	    
+	    volume_set = 0.2
+	    if condition == "relative":
+	        volume_set = 1
+	        note1, note2 = get_two_note_names(test_fact.answer, test_fact.question)
+	        src = pool[note1+'.wav']
+	        Sampler(src).play()
+	
+	        clock.sleep(1000)
+	
+	        src = pool[note2+'.wav']
+	        Sampler(src).play()
+	
+	        
+	    else:
+	        src = pool[test_fact.question+".wav"]
+	        mysampler = Sampler(src,volume = volume_set)
+	        mysampler.play()
+	        mysampler.wait()
+	    
+	    #if newinst:
+	    #	my_canvas.text(answerinst, y = 50, font_size = 20)
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    
+	    
+	    #here we need to add code to give possitive /or negative feedback for the instrument slimpstampen model
+	    
+	    
+	    # Listen for keyboard input and show keypresses on screen as they occur
+	    my_keyboard = Keyboard()
+	    keyboard_response = ""
+	    erased_answer = False
+	    rt = float("inf")
+	    
+	    # Keep listening for key presses until the user presses Enter
+	    while True:
+	    	key, time = my_keyboard.get_key()
+	    	
+	    	# The first keypress determines the response time
+	    	if keyboard_response == "" and not erased_answer:
+	    		rt = clock.time() - trial_start_time
+	    	
+	    	if key == "return":
+	    		break
+	    		
+	    	# press 1 for repeating the note
+	    	if key == "1" or key =="backspace":
+	            if key == "1":
+	                if condition == "instrument":
+	                    Sampler(src).play()
+	                else:
+	                    src = pool[note1+'.wav']
+	                    Sampler(src).play()
+	
+	                    clock.sleep(1000)
+	
+	                    src = pool[note2+'.wav']
+	                    Sampler(src).play()
+	
+	            keyboard_response = keyboard_response[:-1]
+	    		# If the answer is completely erased, the RT is no longer informative
+	            if keyboard_response == "":
+	                erased_answer = True
+	                rt = float("inf")
+	    	
+	    	elif key == "space":
+	    		keyboard_response += " "
+	    	
+	    	else:
+	    		keyboard_response += my_keyboard.to_chr(key)
+	    
+	    	# Update what's on screen'
+	    	my_canvas.clear()
+	    	#my_canvas.text(prompt, font_size = 30)
+	    	#if newinst:
+	    	#	my_canvas.text(pitch.answer, y = 50, font_size = 20)
+	    	my_canvas.text(keyboard_response, y = 100)
+	    	my_canvas.prepare()
+	    	my_canvas.show()
+	    
+	    
+	    # Check if the response is correct
+	    
+	    regex = re.compile('[^a-z]')
+	    print(regex.sub('', keyboard_response), regex.sub('', answer))
+	    correct = regex.sub('', keyboard_response) == regex.sub('', test_fact.answer)
+	    
+	    # Log response
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "test")
+	    if condition == "relative":
+	        mRelative.register_response(response) 
+	    elif condition == "instrument":
+	        minstruments.register_response(response) 
+	    
+	    # Show feedback
+	    feedback_color = "green" if correct else "red"
+	    my_canvas.text(keyboard_response, y = 100, color = feedback_color)
+	    if not correct:
+	    	my_canvas.text(test_fact.answer, y = 150)
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    clock.sleep(var.feedback_duration)
+	    
+	    # Clear the screen between trials
+	    my_canvas.clear()
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    clock.sleep(var.inter_trial_interval)
+	    var.trial_num += 1
+	    
+	    
+	    
+	    var.time_up = False
+	    
+	    
+	    
+	__end__
+	set _prepare ""
+
 define sketchpad Training_instructions
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=-96 y=-32 z_index=0
+
+define sketchpad Training_instructions_2
 	set duration keypress
 	set description "Displays stimuli"
 	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=-96 y=-32 z_index=0
@@ -294,6 +493,8 @@ define sequence experiment
 	run instructions always
 	run learning_session_setup always
 	run Perfect_pitch_loop always
+	run new_sketchpad_1 always
+	run Relative_pitch_loop always
 	run save_data always
 
 define sketchpad instructions
@@ -330,7 +531,7 @@ define inline_script learning_session_setup
 	var.trial_num = 1
 	
 	# Settings
-	var.session_duration = 5000
+	var.session_duration = 50
 	var.feedback_duration = 800
 	var.inter_trial_interval = 200
 	
@@ -340,6 +541,137 @@ define inline_script learning_session_setup
 	set _prepare ""
 
 define inline_script masking_script
+	set description "Executes Python code"
+	___run__
+	trial_start_time = clock.time()
+	
+	# Get next fact from the model
+	# next_factinst, newinst = minstruments.get_next_fact(current_time = trial_start_time)
+	# promptinst = next_factinst.question
+	# answerinst = next_factinst.answer
+	
+	#next instrument
+	next_factinst, newinst = minstruments.get_next_fact(current_time = trial_start_time)
+	promptinst = next_factinst.question
+	answerinst = next_factinst.answer
+	
+	
+	# Show prompt
+	my_canvas = Canvas()
+	
+	#my_canvas.text(prompt, font_size = 30)
+	# we don't want a text prompt, we want a sampler prompt
+	# file pool is the folder named __pool__ in this folder
+	
+	
+	# TODO:
+	# #OPTIONS FOR MASKING
+	# first we want to clear auditory memory by using some noise
+	# OPTIION 1 using the synth - terrible, not very effective I think
+	# bad_sound = Synth(osc="white_noise", length=800, attack=800, decay=500)
+	# bad_sound.volume = 0.25
+	# bad_sound.play()
+	
+	## OPTION 2 - the lick (lol) - right register... but also annoying!
+	# can we use different masking sounds in the same set to prevent annoyance?
+	'''
+	src = pool['mask.wav']
+	Sampler(src).play()
+	
+	# probably too long
+	clock.sleep(2000)
+	
+	'''
+	
+	src = pool[promptinst+".wav"]
+	mysampler =Sampler(src,volume = 0.2)
+	mysampler.play()
+	#mysampler.wait()
+	
+	if newinst:
+		my_canvas.text(answerinst, y = 50, font_size = 20)
+	my_canvas.prepare()
+	my_canvas.show()
+	
+	
+	#here we need to add code to give possitive /or negative feedback for the instrument slimpstampen model
+	
+	
+	# Listen for keyboard input and show keypresses on screen as they occur
+	my_keyboard = Keyboard()
+	keyboard_response = ""
+	erased_answer = False
+	rt = float("inf")
+	
+	# Keep listening for key presses until the user presses Enter
+	while True:
+		key, time = my_keyboard.get_key()
+		
+		# The first keypress determines the response time
+		if keyboard_response == "" and not erased_answer:
+			rt = clock.time() - trial_start_time
+		
+		if key == "return":
+			break
+			
+		# press 1 for repeating the note
+		if key == "1" or key =="backspace":
+			if key == "1":
+				Sampler(src).play()
+			keyboard_response = keyboard_response[:-1]
+			# If the answer is completely erased, the RT is no longer informative
+			if keyboard_response == "":
+				erased_answer = True
+				rt = float("inf")
+		
+		elif key == "space":
+			keyboard_response += " "
+		
+		else:
+			keyboard_response += my_keyboard.to_chr(key)
+	
+		# Update what's on screen'
+		my_canvas.clear()
+		#my_canvas.text(prompt, font_size = 30)
+		if newinst:
+			my_canvas.text(answerinst, y = 50, font_size = 20)
+		my_canvas.text(keyboard_response, y = 100)
+		my_canvas.prepare()
+		my_canvas.show()
+	
+	
+	# Check if the response is correct
+	correct = keyboard_response == answerinst
+	
+	# Log response
+	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "train")
+	minstruments.register_response(response) 
+	
+	# Show feedback
+	feedback_color = "green" if correct else "red"
+	my_canvas.text(keyboard_response, y = 100, color = feedback_color)
+	if not correct:
+		my_canvas.text(answerinst, y = 150)
+	my_canvas.prepare()
+	my_canvas.show()
+	clock.sleep(var.feedback_duration)
+	
+	# Clear the screen between trials
+	my_canvas.clear()
+	my_canvas.prepare()
+	my_canvas.show()
+	clock.sleep(var.inter_trial_interval)
+	
+	# Check if time is up
+	if clock.time() - var.session_start_time >= var.session_duration:
+		var.time_up = True
+		
+	# Increment trial number
+	var.trial_num += 1
+	__end__
+	set _prepare ""
+
+define inline_script masking_script_2
 	set description "Executes Python code"
 	___run__
 	trial_start_time = clock.time()
@@ -495,9 +827,26 @@ define sequence new_sequence_1
 	run Testing_instructions always
 	run Testingblock always
 
+define sequence new_sequence_2
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+
+define sequence new_sequence_2_2
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Training_instructions_2 always
+	run while_there_is_time_left_2 always
+	run Testing_instructions_2 always
+	run Testingblock_2 always
+
 define sketchpad new_sketchpad
 	set duration keypress
 	set description "Displays stimuli"
+
+define sketchpad new_sketchpad_1
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="now starting relative pitch part" x=-320 y=-96 z_index=0
 
 define loop pitch_while_there_are_items_left
 	set source_file ""
@@ -571,7 +920,8 @@ define inline_script present_trial
 	#actual note present
 	prompt_name = prompt+'.wav'
 	src = pool[prompt_name]
-	Sampler(src).play()
+	sample = Sampler(src)
+	sample.play()
 	
 	if new:
 		my_canvas.text(answer, y = 50, font_size = 20)
@@ -635,9 +985,172 @@ define inline_script present_trial
 		my_canvas.text(answer, y = 150)
 	my_canvas.prepare()
 	my_canvas.show()
+	
 	clock.sleep(var.feedback_duration)
 	
 	# Clear the screen between trials
+	sample.stop()
+	my_canvas.clear()
+	my_canvas.prepare()
+	my_canvas.show()
+	clock.sleep(var.inter_trial_interval)
+	
+	
+	# Check if time is up
+	if clock.time() - var.session_start_time >= var.session_duration:
+		var.time_up = True
+		
+	# Increment trial number
+	var.trial_num += 1
+	__end__
+	___prepare__
+	import numpy as np
+	import os
+	__end__
+
+define inline_script present_trial_2
+	set description "Executes Python code"
+	___run__
+	import re
+	
+	trial_start_time = clock.time()
+	
+	# Get next fact from the model
+	next_fact, new = mRelative.get_next_fact(current_time = trial_start_time)
+	second_note = next_fact.question
+	first_note = 0
+	answer = str(next_fact.answer)
+	
+	
+	all_notes = ['a3', 'a-3', 'b3', 'c3', 'c-3', 'd3', 'd-3', 'e3', 'f3', 'f-3', 'g3', 'g-3',
+	                 'a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4',
+	                 'a5', 'a-5', 'b5', 'c5', 'c-5', 'd5', 'd-5', 'e5', 'f5', 'f-5', 'g5', 'g-5']
+	
+	
+	if str("asc") in answer:  # interval is ascending so we need to start low:
+		first_list = ['a3', 'a-3', 'b3', 'c3', 'c-3', 'd3', 'd-3', 'e3', 'f3', 'f-3', 'g3', 'g-3',
+	                 'a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4']
+		asc = 1
+	else:
+		first_list = ['a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4',
+	                 'a5', 'a-5', 'b5', 'c5', 'c-5', 'd5', 'd-5', 'e5', 'f5', 'f-5', 'g5', 'g-5']
+		asc = -1
+	
+	first_note_instant = random.choice(first_list)
+	print(first_note_instant)
+	print(first_note, second_note)
+	
+	index_first_note = all_notes.index(first_note_instant)
+	print(index_first_note)
+	if str("octave") in answer:
+		index_second_note = index_first_note + asc*12
+	else:
+		index_second_note = index_first_note + int(second_note)
+			
+		
+		
+	second_note_instant = all_notes[index_second_note]
+	print(second_note_instant)
+	print(answer)
+	
+	
+			
+	# #next instrument
+	# next_fact, new = minstruments.get_next_fact(current_time = trial_start_time)
+	# prompt = next_fact.question
+	# answer = next_fact.answer
+	
+	
+	# Show prompt
+	my_canvas = Canvas()
+	
+	 
+	src = pool[first_note_instant+'.wav']
+	Sampler(src).play()
+	
+	clock.sleep(1000)
+	
+	src = pool[second_note_instant+'.wav']
+	Sampler(src).play()
+	
+	if new:
+		my_canvas.text(answer, y = 50, font_size = 20)
+	my_canvas.prepare()
+	my_canvas.show()
+	
+	# Listen for keyboard input and show keypresses on screen as they occur
+	my_keyboard = Keyboard()
+	keyboard_response = ""
+	erased_answer = False
+	rt = float("inf")
+	
+	# Keep listening for key presses until the user presses Enter
+	while True:
+		key, time = my_keyboard.get_key()
+		
+		# The first keypress determines the response time
+		if keyboard_response == "" and not erased_answer:
+			rt = clock.time() - trial_start_time
+		
+		if key == "return":
+			break
+			
+		# press r for repeating the note
+		if key == "1" or key == "backspace":
+			if key == "1":
+				src = pool[first_note_instant+'.wav']
+				Sampler(src).play()
+	
+				clock.sleep(1000)
+	
+				src = pool[second_note_instant+'.wav']
+				Sampler(src).play()
+			keyboard_response = keyboard_response[:-1]
+			# If the answer is completely erased, the RT is no longer informative
+			if keyboard_response == "":
+				erased_answer = True
+				rt = float("inf")
+		
+		elif key == "space":
+			keyboard_response += " "
+		
+		else:
+			keyboard_response += my_keyboard.to_chr(key)
+	
+		# Update what's on screen'
+		my_canvas.clear()
+		#my_canvas.text(prompt, font_size = 30)
+		if new:
+			my_canvas.text(answer, y = 50, font_size = 20)
+		my_canvas.text(keyboard_response, y = 100)
+		my_canvas.prepare()
+		my_canvas.show()
+	
+	print(r'%s' %keyboard_response)
+	print(r'%s' %answer)
+	
+	
+	regex = re.compile('[^a-z]')
+	print(regex.sub('', keyboard_response))
+	print(regex.sub('', answer))
+	# Check if the response is correct
+	correct = regex.sub('', keyboard_response) == regex.sub('', answer)
+	
+	# Log response
+	response = Response(next_fact, trial_start_time, rt, correct, "relative", "train")
+	mRelative.register_response(response) 
+	
+	# Show feedback
+	feedback_color = "green" if correct else "red"
+	my_canvas.text(keyboard_response, y = 100, color = feedback_color)
+	if not correct:
+		my_canvas.text(answer, y = 150)
+	my_canvas.prepare()
+	my_canvas.show()
+	clock.sleep(var.feedback_duration)
+	
+	# Clear the screen between trials
+	
 	my_canvas.clear()
 	my_canvas.prepare()
 	my_canvas.show()
@@ -661,6 +1174,7 @@ define inline_script save_data
 	# Write the SlimStampen data to the OpenSesame log file
 	dat = m.export_data(header_true=True)
 	dat2 = minstruments.export_data(header_true = False)
+	dat3 = mRelative.export_data(header_true = False)
 	log.write(dat)
 	log.write(dat2)
 	__end__
@@ -672,6 +1186,8 @@ define inline_script slimstampen_setup
 	import random
 	m = SpacingModel()
 	minstruments = SpacingModel()
+	mRelative = SpacingModel()
+	
 	# Add some study facts to the model (you could also read them from a CSV file)
 	'''facts = [Fact(1, "hello", "bonjour"),
 			Fact(2, "dog", "chien"),
@@ -707,10 +1223,20 @@ define inline_script slimstampen_setup
 	
 	random.shuffle(facts)
 	
+	factsRelative = []
+	with open(pool['namedIntervals.csv']) as f:
+		lines = f.readlines()
+		for i, line in enumerate(lines[1:]):
+			cells = line.split(',')
+			factsRelative.append(Fact(i, cells[1], str(cells[2]).lower()))
+	random.shuffle(factsRelative)
+	
 	for fact in facts:
 		m.add_fact(fact)
 	for fact in factsinstrument:
 		minstruments.add_fact(fact)
+	for fact in factsRelative:
+		mRelative.add_fact(fact)
 	__end__
 	___prepare__
 	from __future__ import division
@@ -989,6 +1515,12 @@ define sequence trial_sequence
 	run masking_script always
 	run present_trial always
 
+define sequence trial_sequence_2
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run masking_script_2 always
+	run present_trial_2 always
+
 define loop while_there_is_time_left
 	set source table
 	set repeat 1000
@@ -1000,4 +1532,16 @@ define loop while_there_is_time_left
 	set break_if "[time_up] = yes"
 	setcycle 0 ignore_this_variable 1
 	run trial_sequence
+
+define loop while_there_is_time_left_2
+	set source table
+	set repeat 1000
+	set order random
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if "[time_up] = yes"
+	setcycle 0 ignore_this_variable 1
+	run trial_sequence_2
 
