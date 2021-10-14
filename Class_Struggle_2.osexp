@@ -271,7 +271,7 @@ define inline_script Keyboard_Input
 	__end__
 	set _prepare ""
 
-define inline_script Keyboard_Setup
+define inline_script Keyboard_Setup_Class
 	set description "Executes Python code"
 	___run__
 	class Keyboard_Setup(NamedTuple):
@@ -664,6 +664,12 @@ define inline_script Test
 	ks = Keyboard_Setup({'return': 'return', 'backspace': 'remove_char_from_end'})
 	ki = Keyboard_Input(ks)
 	ui = UI(keyboard = ki)
+	
+	cue = 'c-3.wav'
+	answer = 'c'
+	
+	ui.present_item(cue, answer, True)
+	
 	ui.display.set_answer_text('hello there')
 	text, _ = ki.take_input()
 	if text == 'hello there':
@@ -673,7 +679,7 @@ define inline_script Test
 	    
 	cue = 'c-3.wav'
 	answer = 'c'
-	ui.present_cue(cue, answer)
+	ui.present_cue(item, True)
 	response, rt, correct = ui.take_input()
 	ui.present_feedback()
 	from time import sleep
@@ -952,6 +958,13 @@ define inline_script UI_Class
 	set description "Executes Python code"
 	___run__
 	class UI:
+	    class Item_State:
+	        cue: str = ''
+	        answer: str = ''
+	        response: str = ''
+	        rt: float = float('inf')
+	        correct: bool = False
+	        
 	    def __init__(self, display: Display = None, audio: Audio = None,
 	                 keyboard: Keyboard_Input = None):
 	        print('creating ui')
@@ -960,41 +973,66 @@ define inline_script UI_Class
 	        self.keyboard: Keyboard_Input = keyboard \
 	            if keyboard else Keyboard_Input()
 	        self.keyboard.set_interface(self)
-	        print(self.keyboard)
+	        
 	        self.set_to_init_values()
 	    
 	    def set_to_init_values(self):
-	        self.current_cue: str = ''
-	        self.current_answer: str = ''
-	        self.current_correct: bool = False
-	
-	    def present_cue(self, cue, answer: str = ''):
-	        self.display.clear()
-	        if answer: self.display.set_answer_text(answer)
-	        self.audio.play_audio_from_pool(cue)
+	        self.item_state = UI.Item_State()
 	        
-	        self.current_cue, self.current_answer = cue, answer
+	    def clear_screen(self):
+	        self.display.clear()
+	
+	    def present_cue(self):
+	        self.audio.play_audio_from_pool(self.state.cue)
+	        
+	    def show_answer(self):
+	        self.display.set_answer_text(self.state.answer)
 	        
 	    def repeat_cue(self):
-	        self.audio.play_audio_from_pool(self.current_cue)
+	        self.present_cue()
+	    
+	    def check_response(self):
+	        self.state.correct = (self.state.response == self.state.answer)
 	        
 	    def take_input(self):
-	        self.current_response, self.current_rt = self.keyboard.take_input()
-	        self.current_correct = (self.current_response == self.current_answer)
-	        return self.current_response, self.current_rt, self.current_correct
+	        self.state.response, self.state.rt = self.keyboard.take_input()
 	    
 	    def present_feedback(self):
-	        if self.current_correct:
+	        if self.state.correct:
 	            feedback_text = 'correct'
 	            feedback_mood = 'positive'
 	        else:
 	            feedback_text =\
 	                'incorrect. you responded {}, the correct answer was {}'.\
-	                    format(self.current_response, self.current_answer)
+	                    format(self.state.response, self.state.answer)
 	            feedback_mood = 'negative'
 	            
 	        self.display.set_feedback_text(feedback_text, feedback_mood)
 	        
+	    def set_cue_answer(self, cue, answer):
+	        self.state = UI.Item_State()
+	        self.state.cue = cue
+	        self.state.answer = answer
+	        
+	    def present_item(self, cue, answer, show_answer: bool = False):
+	        self.set_cue_answer(cue, answer)
+	        self.clear_screen()
+	        if show_answer: self.show_answer()
+	        self.present_cue()
+	        self.take_input()
+	        self.check_response()
+	        self.present_feedback()
+	        return dir(self.state)
+	        
+	__end__
+	set _prepare ""
+
+define inline_script UI_Setup
+	set description "Executes Python code"
+	___run__
+	ks = Keyboard_Setup({'return': 'return', 'backspace': 'remove_char_from_end'})
+	ki = Keyboard_Input(ks)
+	ui = UI(keyboard = ki)
 	__end__
 	set _prepare ""
 
@@ -1006,10 +1044,10 @@ define sequence experiment
 	run Text_Style always
 	run Display always
 	run Audio always
-	run Keyboard_Setup always
+	run Keyboard_Setup_Class always
 	run Keyboard_Input always
 	run UI_Class always
-	run Test always
+	run UI_Setup always
 	run instructions always
 	run SlimStampen always
 	run Text_Class always
