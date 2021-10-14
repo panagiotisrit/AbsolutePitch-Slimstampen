@@ -43,7 +43,7 @@ define inline_script Audio
 	    def __init__(self):
 	        pass
 	    
-	    def play_sound_from_pool(self, filename: str):
+	    def play_audio_from_pool(self, file_name: str):
 	        src = pool[file_name]
 	        Sampler(src).play()
 	__end__
@@ -91,12 +91,12 @@ define inline_script Display
 	        self.feedback_mood = feedback_mood
 	        if update_display: self.show()
 	        
-	    def clear_screen(self, update_display: bool = True):
+	    def clear(self, update_display: bool = True):
 	        self.answer_text = ""
 	        self.input_text = ""
 	        self.feedback_text = ""
 	        self.feedback_mood = ""
-	        if update_display(): self.show()
+	        if update_display: self.show()
 	        
 	    def add_text(self, text: str, style: Text_Style):
 	        print('add_text')
@@ -248,7 +248,7 @@ define inline_script Keyboard_Input
 	        elif action == 'remove_char_from_end':
 	            self.remove_char_from_end()
 	        elif action == 'repeat_cue':
-	            pass
+	            self.interface.repeat_cue()
 	        
 	    def parse_char(self, key: str):
 	        if key == 'space': self.add_char_to_end(' ')
@@ -259,6 +259,7 @@ define inline_script Keyboard_Input
 	        else: self.parse_char(key)
 	        
 	    def take_input(self):
+	        self.set_to_init_values()
 	        self.is_done = False
 	        while not self.is_done:
 	            key, _ = self.keyboard.get_key()
@@ -669,7 +670,12 @@ define inline_script Test
 	    ui.display.set_feedback_text('correct', 'positive')
 	else:
 	    ui.display.set_feedback_text('incorrect', 'negative')
-	
+	    
+	cue = 'c-3.wav'
+	answer = 'c'
+	ui.present_cue(cue, answer)
+	response, rt, correct = ui.take_input()
+	ui.present_feedback()
 	from time import sleep
 	sleep(3)
 	__end__
@@ -951,8 +957,44 @@ define inline_script UI_Class
 	        print('creating ui')
 	        self.display: Display = display if display else Display()
 	        self.audio: Audio = audio if audio else Audio()
-	        self.keyboard: Keyboard_Input = keyboard.set_interface(self)\
-	            if keyboard else Keyboard_Input(self)
+	        self.keyboard: Keyboard_Input = keyboard \
+	            if keyboard else Keyboard_Input()
+	        self.keyboard.set_interface(self)
+	        print(self.keyboard)
+	        self.set_to_init_values()
+	    
+	    def set_to_init_values(self):
+	        self.current_cue: str = ''
+	        self.current_answer: str = ''
+	        self.current_correct: bool = False
+	
+	    def present_cue(self, cue, answer: str = ''):
+	        self.display.clear()
+	        if answer: self.display.set_answer_text(answer)
+	        self.audio.play_audio_from_pool(cue)
+	        
+	        self.current_cue, self.current_answer = cue, answer
+	        
+	    def repeat_cue(self):
+	        self.audio.play_audio_from_pool(self.current_cue)
+	        
+	    def take_input(self):
+	        self.current_response, self.current_rt = self.keyboard.take_input()
+	        self.current_correct = (self.current_response == self.current_answer)
+	        return self.current_response, self.current_rt, self.current_correct
+	    
+	    def present_feedback(self):
+	        if self.current_correct:
+	            feedback_text = 'correct'
+	            feedback_mood = 'positive'
+	        else:
+	            feedback_text =\
+	                'incorrect. you responded {}, the correct answer was {}'.\
+	                    format(self.current_response, self.current_answer)
+	            feedback_mood = 'negative'
+	            
+	        self.display.set_feedback_text(feedback_text, feedback_mood)
+	        
 	__end__
 	set _prepare ""
 
