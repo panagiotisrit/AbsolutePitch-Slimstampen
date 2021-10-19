@@ -1,7 +1,7 @@
 ---
 API: 2.1
 OpenSesame: 3.3.10
-Platform: nt
+Platform: posix
 ---
 set width 1024
 set uniform_coordinates yes
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "C:/Users/Panos/Desktop/usermodelsactual/AbsolutePitch-Slimstampen"
+set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -39,10 +39,9 @@ set background black
 define sketchpad Change_intervals_conditions
 	set duration keypress
 	set description "Displays stimuli"
-	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now changing to intervals no masking" x=0.0 y=0.0 z_index=0
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now changing to intervals no masking" x=0 y=0 z_index=0
 
 define loop Relative_pitch_loop_mask
-	set source_file ""
 	set source table
 	set repeat 1
 	set order random
@@ -69,7 +68,7 @@ define loop Relative_pitch_loop_no_mask_
 
 define loop Single_notes_Masking
 	set source table
-	set repeat 0
+	set repeat 1
 	set order sequential
 	set description "Repeatedly runs another item"
 	set cycles 1
@@ -81,7 +80,7 @@ define loop Single_notes_Masking
 
 define loop Single_notes_no_masking
 	set source table
-	set repeat 0
+	set repeat 1
 	set order sequential
 	set description "Repeatedly runs another item"
 	set cycles 1
@@ -301,7 +300,7 @@ define inline_script Testingblock_1
 	    correct = keyboard_response == test_fact.answer
 	    
 	    # Log response
-	    response = Response(test_fact, trial_start_time, rt, correct, condition, "test")
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "no_mask", "test")
 	    m.register_response(response) 
 	   
 	    
@@ -356,6 +355,8 @@ define inline_script Testingblock_2
 		    index_second_note = index_first_note + asc*12
 	    else:
 		    index_second_note = index_first_note + int(second_note)
+	     
+	
 		
 	    second_note_instant = all_notes[index_second_note]
 	    return first_note_instant, second_note_instant
@@ -374,175 +375,6 @@ define inline_script Testingblock_2
 	    fact_list_to_test.append((factsRelative[i], "relative"))
 	    i += 1
 	
-	if i >= len(factsRelative):    # bad, probably
-	    fact_list_to_test = fact_list_to_test + factsinstrument[i:-1]
-	else:
-	    fact_list_to_test = fact_list_to_test + factsRelative[i:-1]
-	
-	
-	for fact in fact_list_to_test[0:2]:    # NOW TESTS TWO FACTS
-	    test_fact, condition = fact
-	    trial_start_time = clock.time()
-	    
-	    volume_set = 0.2
-	    if condition == "relative":
-	        volume_set = 1
-	        note1, note2 = get_two_note_names(test_fact.answer, test_fact.question)
-	        src = pool[note1+'.wav']
-	        Sampler(src).play()
-	
-	        clock.sleep(1000)
-	
-	        src = pool[note2+'.wav']
-	        Sampler(src).play()
-	
-	        
-	    else:
-	        src = pool[test_fact.question+".wav"]
-	        mysampler = Sampler(src,volume = volume_set)
-	        mysampler.play()
-	        mysampler.wait()
-	    
-	    #if newinst:
-	    #	my_canvas.text(answerinst, y = 50, font_size = 20)
-	    my_canvas.prepare()
-	    my_canvas.show()
-	    
-	    
-	    #here we need to add code to give possitive /or negative feedback for the instrument slimpstampen model
-	    
-	    
-	    # Listen for keyboard input and show keypresses on screen as they occur
-	    my_keyboard = Keyboard()
-	    keyboard_response = ""
-	    erased_answer = False
-	    rt = float("inf")
-	    
-	    # Keep listening for key presses until the user presses Enter
-	    while True:
-	    	key, time = my_keyboard.get_key()
-	    	
-	    	# The first keypress determines the response time
-	    	if keyboard_response == "" and not erased_answer:
-	    		rt = clock.time() - trial_start_time
-	    	
-	    	if key == "return":
-	    		break
-	    		
-	    	# press 1 for repeating the note
-	    	if key == "1" or key =="backspace":
-	            if key == "1":
-	                if condition == "instrument":
-	                    Sampler(src).play()
-	                else:
-	                    src = pool[note1+'.wav']
-	                    Sampler(src).play()
-	
-	                    clock.sleep(1000)
-	
-	                    src = pool[note2+'.wav']
-	                    Sampler(src).play()
-	
-	            keyboard_response = keyboard_response[:-1]
-	    		# If the answer is completely erased, the RT is no longer informative
-	            if keyboard_response == "":
-	                erased_answer = True
-	                rt = float("inf")
-	    	
-	    	elif key == "space":
-	    		keyboard_response += " "
-	    	
-	    	else:
-	    		keyboard_response += my_keyboard.to_chr(key)
-	    
-	    	# Update what's on screen'
-	    	my_canvas.clear()
-	    	#my_canvas.text(prompt, font_size = 30)
-	    	#if newinst:
-	    	#	my_canvas.text(pitch.answer, y = 50, font_size = 20)
-	    	my_canvas.text(keyboard_response, y = 100)
-	    	my_canvas.prepare()
-	    	my_canvas.show()
-	    
-	    
-	    # Check if the response is correct
-	    
-	    regex = re.compile('[^a-z]')
-	    print(regex.sub('', keyboard_response), regex.sub('', answer))
-	    correct = regex.sub('', keyboard_response) == regex.sub('', test_fact.answer)
-	    
-	    # Log response
-	    response = Response(test_fact, trial_start_time, rt, correct, condition, "test")
-	    if condition == "relative":
-	        mRelative.register_response(response) 
-	    elif condition == "instrument":
-	        minstruments.register_response(response) 
-	    
-	    # Show feedback
-	    feedback_color = "green" if correct else "red"
-	    my_canvas.text(keyboard_response, y = 100, color = feedback_color)
-	    if not correct:
-	    	my_canvas.text(test_fact.answer, y = 150)
-	    my_canvas.prepare()
-	    my_canvas.show()
-	    clock.sleep(var.feedback_duration)
-	    
-	    # Clear the screen between trials
-	    my_canvas.clear()
-	    my_canvas.prepare()
-	    my_canvas.show()
-	    clock.sleep(var.inter_trial_interval)
-	    var.trial_num += 1
-	    
-	    
-	    
-	    var.time_up = False
-	    
-	    
-	    
-	__end__
-	set _prepare ""
-
-define inline_script Testingblock_2_1
-	set description "Executes Python code"
-	___run__
-	#####
-	
-	### combine the two lists of facts
-	
-	def get_two_note_names(answer, second_note):
-	    all_notes = ['a3', 'a-3', 'b3', 'c3', 'c-3', 'd3', 'd-3', 'e3', 'f3', 'f-3', 'g3', 'g-3',
-	                 'a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4',
-	                 'a5', 'a-5', 'b5', 'c5', 'c-5', 'd5', 'd-5', 'e5', 'f5', 'f-5', 'g5', 'g-5']
-	
-	    first_list = ['a3', 'a-3', 'b3', 'c3', 'c-3', 'd3', 'd-3', 'e3', 'f3', 'f-3', 'g3', 'g-3',
-	                 'a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4']
-	    asc = 1
-	
-	
-	    first_note_instant = random.choice(first_list)
-	
-	    index_first_note = all_notes.index(first_note_instant)
-	
-	    if str("octave") in answer:
-		    index_second_note = index_first_note + asc*12
-	    else:
-		    index_second_note = index_first_note + int(second_note)
-		
-	    second_note_instant = all_notes[index_second_note]
-	    return first_note_instant, second_note_instant
-	
-	
-	    
-	
-	fact_list_to_test = []
-	
-	# extra randomizer
-	random.shuffle(factsRelative)
-	i = 0
-	while i < len(factsRelative): #merging the two lists counterwise
-	    fact_list_to_test.append((factsRelative[i], "relative"))
-	    i += 1
 	
 	
 	for fact in fact_list_to_test:    # NOW TESTS TWO FACTS
@@ -637,7 +469,184 @@ define inline_script Testingblock_2_1
 	    correct = regex.sub('', keyboard_response) == regex.sub('', test_fact.answer)
 	    
 	    # Log response
-	    response = Response(test_fact, trial_start_time, rt, correct, condition, "test")
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "mask", "test")
+	    if condition == "relative":
+	        mRelative.register_response(response) 
+	    elif condition == "instrument":
+	        minstruments.register_response(response) 
+	    
+	    # Show feedback
+	    feedback_color = "green" if correct else "red"
+	    my_canvas.text(keyboard_response, y = 100, color = feedback_color)
+	    if not correct:
+	    	my_canvas.text(test_fact.answer, y = 150)
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    clock.sleep(var.feedback_duration)
+	    
+	    # Clear the screen between trials
+	    my_canvas.clear()
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    clock.sleep(var.inter_trial_interval)
+	    var.trial_num += 1
+	    
+	    
+	    
+	    var.time_up = False
+	    
+	    
+	    
+	__end__
+	set _prepare ""
+
+define inline_script Testingblock_2_1
+	set description "Executes Python code"
+	___run__
+	#####
+	
+	### combine the two lists of facts
+	
+	def get_two_note_names(answer, second_note):
+	    
+	    all_notes = ['a3', 'a-3', 'b3', 'c3', 'c-3', 'd3', 'd-3', 'e3', 'f3', 'f-3', 'g3', 'g-3',
+	                 'a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4',
+	                 'a5', 'a-5', 'b5', 'c5', 'c-5', 'd5', 'd-5', 'e5', 'f5', 'f-5', 'g5', 'g-5']
+	
+	    first_list = ['a3', 'a-3', 'b3', 'c3', 'c-3', 'd3', 'd-3', 'e3', 'f3', 'f-3', 'g3', 'g-3',
+	                 'a4', 'a-4', 'b4', 'c4', 'c-4', 'd4', 'd-4', 'e4', 'f4', 'f-4', 'g4', 'g-4']
+	    asc = 1
+	
+	
+	    first_note_instant = random.choice(first_list)
+	
+	    index_first_note = all_notes.index(first_note_instant)
+	
+	    if str("octave") in answer:
+		    index_second_note = index_first_note + asc*12
+	    else:
+		    index_second_note = index_first_note + int(second_note)
+	    
+	    print(first_note_instant)
+	    print(index_first_note, index_second_note)
+		
+	    second_note_instant = all_notes[index_second_note]
+	    return first_note_instant, second_note_instant
+	
+	
+	    
+	
+	fact_list_to_test = []
+	
+	# extra randomizer
+	random.shuffle(factsRelative)
+	i = 0
+	while i < len(factsRelative): #merging the two lists counterwise
+	    fact_list_to_test.append((factsRelative[i], "relative"))
+	    i += 1
+	
+	
+	for fact in fact_list_to_test:    # NOW TESTS TWO FACTS
+	    test_fact, condition = fact
+	    trial_start_time = clock.time()
+	    
+	    volume_set = 0.2
+	    if condition == "relative":
+	        volume_set = 1
+	        note1, note2 = get_two_note_names(test_fact.answer, test_fact.question)
+	        src = pool[note1+'.wav']
+	        Sampler(src).play()
+	
+	        clock.sleep(1000)
+	
+	        src = pool[note2+'.wav']
+	        Sampler(src).play()
+	
+	        
+	    else:
+	        src = pool[test_fact.question+".wav"]
+	        mysampler = Sampler(src,volume = volume_set)
+	        mysampler.play()
+	        mysampler.wait()
+	    
+	    #if newinst:
+	    #	my_canvas.text(answerinst, y = 50, font_size = 20)
+	    
+	  
+	    #my_canvas.text(note1, y = 10)
+	    #my_canvas.text(note2, y = 20)
+	    
+	    my_canvas.prepare()
+	    my_canvas.show()
+	    
+	    
+	    #here we need to add code to give possitive /or negative feedback for the instrument slimpstampen model
+	    
+	    
+	    # Listen for keyboard input and show keypresses on screen as they occur
+	    my_keyboard = Keyboard()
+	    keyboard_response = ""
+	    erased_answer = False
+	    rt = float("inf")
+	    
+	    
+	
+	    
+	    # Keep listening for key presses until the user presses Enter
+	    while True:
+	    	key, time = my_keyboard.get_key()
+	    	
+	    	# The first keypress determines the response time
+	    	if keyboard_response == "" and not erased_answer:
+	    		rt = clock.time() - trial_start_time
+	    	
+	    	if key == "return":
+	    		break
+	    		
+	    	# press 1 for repeating the note
+	    	if key == "1" or key =="backspace":
+	            if key == "1":
+	                if condition == "instrument":
+	                    Sampler(src).play()
+	                else:
+	                    src = pool[note1+'.wav']
+	                    Sampler(src).play()
+	
+	                    clock.sleep(1000)
+	
+	                    src = pool[note2+'.wav']
+	                    Sampler(src).play()
+	
+	            keyboard_response = keyboard_response[:-1]
+	    		# If the answer is completely erased, the RT is no longer informative
+	            if keyboard_response == "":
+	                erased_answer = True
+	                rt = float("inf")
+	    	
+	    	elif key == "space":
+	    		keyboard_response += " "
+	    	
+	    	else:
+	    		keyboard_response += my_keyboard.to_chr(key)
+	    
+	    	# Update what's on screen'
+	    	my_canvas.clear()
+	    	#my_canvas.text(prompt, font_size = 30)
+	    	#if newinst:
+	    	#	my_canvas.text(pitch.answer, y = 50, font_size = 20)
+	    	my_canvas.text(keyboard_response, y = 100)
+	    	my_canvas.prepare()
+	    	my_canvas.show()
+	    
+	    
+	    # Check if the response is correct
+	    
+	    regex = re.compile('[^a-z]')
+	    print(regex.sub('', keyboard_response), regex.sub('', test_fact.answer))
+	    correct = regex.sub('', keyboard_response) == regex.sub('', test_fact.answer)
+	    
+	    # Log response
+	    response = Response(test_fact, trial_start_time, rt, correct, condition,"no_mask", "test")
 	    if condition == "relative":
 	        mRelative.register_response(response) 
 	    
@@ -684,13 +693,10 @@ define inline_script Testingblock_mask
 	    fact_list_to_test.append((facts[i], "pitch"))
 	    i += 1
 	
-	if i >= len(facts):    # bad, probably
-	    fact_list_to_test = fact_list_to_test + factsinstrument[i:-1]
-	else:
-	    fact_list_to_test = fact_list_to_test + facts[i:-1]
 	
 	
-	for fact in fact_list_to_test[0:2]:    # should test all
+	
+	for fact in fact_list_to_test:    # should test all
 	    test_fact, condition = fact
 	    trial_start_time = clock.time()
 	    src = pool[test_fact.question+".wav"]
@@ -757,7 +763,7 @@ define inline_script Testingblock_mask
 	    correct = keyboard_response == test_fact.answer
 	    
 	    # Log response
-	    response = Response(test_fact, trial_start_time, rt, correct, condition, "test")
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "mask", "test")
 	    if condition == "pitch":
 	        m.register_response(response) 
 	    elif condition == "instrument":
@@ -811,7 +817,7 @@ define sketchpad Training_instructions_2_1
 define sketchpad changegroup
 	set duration keypress
 	set description "Displays stimuli"
-	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Going into Single note no masking" x=0.0 y=0.0 z_index=0
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Going into Single note no masking" x=0 y=0 z_index=0
 
 define sequence experiment
 	set flush_keyboard yes
@@ -852,7 +858,7 @@ define loop instruments_while_items_left
 define sketchpad intervals
 	set duration keypress
 	set description "Displays stimuli"
-	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now starting Interval conditions" x=0.0 y=0.0 z_index=0
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now starting Interval conditions" x=0 y=0 z_index=0
 
 define inline_script learning_session_setup
 	set description "Executes Python code"
@@ -867,7 +873,7 @@ define inline_script learning_session_setup
 	var.trial_num = 1
 	
 	# Settings
-	var.session_duration = 50
+	var.session_duration = 5000
 	var.feedback_duration = 800
 	var.inter_trial_interval = 200
 	
@@ -957,7 +963,7 @@ define inline_script masking_script
 	correct = keyboard_response == answerinst
 	
 	# Log response
-	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "train")
+	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "mask", "train")
 	minstruments.register_response(response) 
 	
 	# Show feedback
@@ -1065,7 +1071,7 @@ define inline_script masking_script_1
 	correct = keyboard_response == answerinst
 	
 	# Log response
-	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "train")
+	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "mask", "train")
 	minstruments.register_response(response) 
 	
 	# Show feedback
@@ -1515,7 +1521,7 @@ define inline_script present_trial
 	correct = keyboard_response == answer
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "train")
+	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "mask", "train")
 	m.register_response(response) 
 	
 	# Show feedback
@@ -1660,7 +1666,7 @@ define inline_script present_trial_1
 	correct = keyboard_response == answer
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "train")
+	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "no_mask", "train")
 	m.register_response(response) 
 	
 	# Show feedback
@@ -1819,7 +1825,7 @@ define inline_script present_trial_2
 	correct = regex.sub('', keyboard_response) == regex.sub('', answer)
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct, "relative", "train")
+	response = Response(next_fact, trial_start_time, rt, correct, "relative", "mask", "train")
 	mRelative.register_response(response) 
 	
 	# Show feedback
@@ -1913,6 +1919,8 @@ define inline_script present_trial_2_1
 	
 	if new:
 		my_canvas.text(answer, y = 50, font_size = 20)
+		
+	
 	my_canvas.prepare()
 	my_canvas.show()
 	
@@ -1975,7 +1983,7 @@ define inline_script present_trial_2_1
 	correct = regex.sub('', keyboard_response) == regex.sub('', answer)
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct, "relative", "train")
+	response = Response(next_fact, trial_start_time, rt, correct, "relative", "no_mask", "train")
 	mRelative.register_response(response) 
 	
 	# Show feedback
@@ -2081,7 +2089,7 @@ define inline_script slimstampen_setup
 	from collections import namedtuple
 	
 	Fact = namedtuple("Fact", "fact_id, question, answer")
-	Response = namedtuple("Response", "fact, start_time, rt, correct, condition, test")
+	Response = namedtuple("Response", "fact, start_time, rt, correct, condition, mask, test")
 	Encounter = namedtuple("Encounter", "activation, time, reaction_time, decay")
 	
 	

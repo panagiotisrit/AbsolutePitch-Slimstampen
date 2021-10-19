@@ -1,33 +1,52 @@
-trial,start_time,rt,correct,condition,test,fact_id,question,answer,alpha
-1,12196.35957599894,1725.4232919985952,True,pitch,train,2,f3,f,0.3
-2,26211.72390799984,3190.9535529994173,False,pitch,test,5,b4,b,0.3
+trial,start_time,rt,correct,condition,mask,test,fact_id,question,answer,alpha
+1,11819.569369981764,922.6398229948245,True,pitch,mask,train,2,e3,e,0.3
+2,25910.06808000384,3369.993579981383,False,pitch,mask,test,1,c3,c,0.3
+3,39482.64205400483,3520.9313899977133,False,pitch,mask,test,3,g3,g,0.3
+4,50921.5600869793,3521.9658330024686,True,pitch,mask,test,4,b4,b,0.3
+5,62410.62537598191,1716.691303998232,True,pitch,mask,test,5,c4,c,0.3
+6,74349.46720299195,5082.230692001758,True,pitch,mask,test,2,e3,e,0.3
+7,85388.80513599725,6018.673246988328,False,pitch,no_mask,train,1,c3,c,0.3
+8,94776.91267698538,1708.486718009226,True,pitch,no_mask,test,1,c3,c,0.30585937500000004
+9,97727.81467798632,inf,False,pitch,no_mask,test,5,c4,c,0.3
+10,110549.81327199494,7236.113528982969,True,pitch,no_mask,test,4,b4,b,0.3
+11,119203.65731598577,3573.945668002125,False,pitch,no_mask,test,2,e3,e,0.30351562499999996
+12,123989.5278569893,10067.32665898744,True,pitch,no_mask,test,3,g3,g,0.3
 
-1,7536.128022999037,1061.1923780015786,True,instrument,train,3,drums,drums,0.3
-2,17417.95396499947,6074.145057998976,True,instrument,test,6,frenchhorn,french horn,0.3
-3,44658.1403909986,7695.049455000117,True,instrument,test,5,flute,flute,0.3
-4,94909.0171759999,9149.943815998995,False,instrument,test,2,clarinet,clarinet,0.3
-5,125809.68137599848,6435.438835000241,True,instrument,test,7,harmonica,harmonica,0.3
-6,176120.52819199744,7275.397602003068,True,instrument,test,1,accordeon,accordeon,0.3
-7,210021.21923199957,5429.358058998332,True,instrument,test,7,harmonica,harmonica,0.3
+1,6280.736769986106,1065.6001470051706,True,instrument,mask,train,9,maraccas,maraccas,0.3
+2,15361.124895978719,7130.0239830161445,True,instrument,mask,test,4,electric_guitar,electric guitar,0.3
+3,30428.485875978367,6923.448645015014,False,instrument,mask,test,1,accordeon,accordeon,0.3
+4,44151.83890197659,4919.221652002307,True,instrument,mask,test,8,harp,harp,0.3
+5,55590.67658497952,4380.613040004391,True,instrument,mask,test,9,maraccas,maraccas,0.3
+6,65263.02953998675,6481.3589850091375,False,instrument,mask,test,2,clarinet,clarinet,0.3
+7,141227.62818299816,8102.689019986428,True,instrument,mask,train,4,electric_guitar,electric guitar,0.3
+8,160841.16486398852,7530.972333013779,True,instrument,mask,test,5,flute,flute,0.3
+9,180699.44520600257,2598.484745976748,True,instrument,mask,test,3,drums,drums,0.3
+10,191204.92475299397,4459.669948002556,True,instrument,mask,test,9,maraccas,maraccas,0.33710937499999993
+11,211780.99284798373,inf,True,instrument,mask,test,1,accordeon,accordeon,0.3
+12,241795.54429498967,8416.73940801411,False,instrument,mask,test,2,clarinet,clarinet,0.3
 
-1,34090.99431499999,3891.8346719983674,True,relative,train,20,-7,"perfect fifth descending
+1,154220.4660839925,2219.8838659969624,True,relative,mask,train,1,4,"major third 
 ",0.3
-2,54128.79331499789,11725.290587000927,False,relative,test,20,-7,"perfect fifth descending
+2,170411.3602959842,inf,True,relative,mask,test,4,12,"perfect octave 
 ",0.3
-3,79258.95264599967,2200.5096419998154,True,relative,train,24,-11,"major seventh descending
+3,185169.21365397866,3997.015539003769,False,relative,mask,test,0,0,"perfect unison
 ",0.3
-4,105978.99337999843,2100.0633760013443,True,relative,test,13,0,"perfect unison
+4,198257.87760698586,7445.398778014351,False,relative,mask,test,2,7,"perfect fifth 
 ",0.3
-5,112140.82920600049,4908.06505799992,False,relative,train,24,-11,"major seventh descending
+5,230923.26573000173,5325.7166469993535,False,relative,mask,test,1,4,"major third 
 ",0.3
-6,135046.05885699857,8043.9024250008515,False,relative,test,22,-9,"major sixth descending
+6,251816.63018398103,3408.1203429959714,True,relative,mask,test,3,11,"major seventh 
 ",0.3
-7,169972.94983100073,2067.5829769970733,True,relative,train,13,0,"perfect unison
+7,261921.44963899045,2098.933181987377,True,relative,no_mask,train,4,12,"perfect octave 
 ",0.3
-8,187112.65412300054,6303.3539690004545,True,relative,test,12,12,"perfect octave ascending
+8,268465.1625409897,inf,False,relative,no_mask,test,1,4,"major third 
+",0.300390625
+9,276828.57738499297,3487.969596986659,False,relative,no_mask,test,4,12,"perfect octave 
+",0.300390625
+10,283348.72558299685,inf,True,relative,no_mask,test,3,11,"major seventh 
 ",0.3
-9,199357.10240700064,3088.5170989968174,False,relative,train,22,-9,"major sixth descending
+11,296938.8809669763,2004.595557024004,True,relative,no_mask,test,0,0,"perfect unison
 ",0.3
-10,217829.41396299793,2961.7784660003963,True,relative,test,24,-11,"major seventh descending
-",0.32539062499999993
+12,301958.0026519834,inf,True,relative,no_mask,test,2,7,"perfect fifth 
+",0.3
 
