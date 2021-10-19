@@ -1,27 +1,6 @@
 root,second_note_interval_from_first_note,correct_response
 0,0,Perfect unison
-0,1,Minor second ascending
-0,2,Major second ascending
-0,3,Minor third ascending
-0,4,Major third ascending
-0,5,Perfect fourth ascending
-0,6,Tritone ascending
-0,7,Perfect fifth ascending
-0,8,Minor sixth ascending
-0,9,Major sixth ascending
-0,10,Minor seventh ascending
-0,11,Major seventh ascending
-0,12,Perfect octave ascending
-0,0,Perfect unison
-0,-1,Minor second descending
-0,-2,Major second descending
-0,-3,Minor third descending
-0,-4,Major third descending
-0,-5,Perfect fourth descending
-0,-6,Tritone descending
-0,-7,Perfect fifth descending
-0,-8,Minor sixth descending
-0,-9,Major sixth descending
-0,-10,Minor seventh descending
-0,-11,Major seventh descending
-0,-12,Perfect octave descending
+0,4,Major third 
+0,7,Perfect fifth 
+0,11,Major seventh 
+0,12,Perfect octave 
