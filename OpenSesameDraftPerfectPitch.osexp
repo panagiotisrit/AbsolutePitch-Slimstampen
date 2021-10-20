@@ -41,6 +41,238 @@ define sketchpad Change_intervals_conditions
 	set description "Displays stimuli"
 	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now changing to intervals no masking" x=0 y=0 z_index=0
 
+define inline_script Class_Struggle
+	set description "Executes Python code"
+	___run__
+	from typing import NamedTuple
+	
+	class Text_Style(NamedTuple):
+	    y: int
+	    font_size: int
+	    color: str
+	
+	class Display:
+	    answer_style: Text_Style = Text_Style(50, 20, 'White')
+	    input_style: Text_Style = Text_Style(100, 20, 'White')
+	    feedback_style_positive: Text_Style = Text_Style(150, 20, 'Green')
+	    feedback_style_negative: Text_Style = Text_Style(150, 20, 'Red')
+	    feedback_style_neutral: Text_Style = Text_Style(150, 20, 'White')
+	    
+	    def __init__(self):
+	        print('creating display')
+	        self.answer_text: str = ""
+	        self.input_text: str = ""
+	        self.feedback_text: str = ""
+	        self.feedback_mood: str = "neutral"
+	        self.canvas: Canvas = Canvas()
+	        
+	    def set_answer_text(self, answer_text: str, update_display: bool = True):
+	        self.answer_text = answer_text
+	        if update_display: self.show()
+	        
+	    def set_input_text(self, input_text: str, update_display: bool = True):
+	        self.input_text = input_text
+	        if update_display: self.show()
+	        
+	    def set_feedback_text(self, feedback_text: str, feedback_mood: str,\
+	                          update_display: bool = True):
+	        self.feedback_text = feedback_text
+	        self.feedback_mood = feedback_mood
+	        if update_display: self.show()
+	        
+	    def clear_screen(self, update_display: bool = True):
+	        self.answer_text = ""
+	        self.input_text = ""
+	        self.feedback_text = ""
+	        self.feedback_mood = ""
+	        if update_display(): self.show()
+	        
+	    def add_text(self, text: str, style: Text_Style):
+	        print('add_text')
+	        self.canvas.text(text, y= style.y, \
+	                         font_size= style.font_size, color= style.color)
+	        
+	    def show(self):
+	        print('showing screen')
+	        self.canvas.clear()
+	        
+	        if self.answer_text:
+	            self.add_text(self.answer_text, self.answer_style)
+	        if self.input_text:
+	            self.add_text(self.input_text, self.input_style)
+	        
+	        if self.feedback_text:
+	            if self.feedback_mood == 'positive':
+	                self.add_text(self.feedback_text,\
+	                    self.feedback_style_positive)
+	            elif self.feedback_mood == 'negative':
+	                self.add_text(self.feedback_text,\
+	                    self.feedback_style_negative)
+	            elif self.feedback_mood == 'neutral':
+	                self.add_text(self.feedback_text,\
+	                    self.feedback_style_neutral)
+	            else:
+	                print('Display: error: unknown feedback mood {}'\
+	                    .format(self.feedback_mood))
+	                exit(-1)
+	            
+	        self.canvas.prepare()
+	        self.canvas.show()
+	
+	class Audio:
+	    def __init__(self):
+	        pass
+	    
+	    def play_sound_from_pool(self, filename: str):
+	        src = pool[file_name]
+	        Sampler(src).play()
+	        
+	
+	class Keyboard_Setup(NamedTuple):
+	    ctrl_char_mapping: dict
+	
+	class Keyboard_Input:
+	    def __init__(self, keyboard_setup: Keyboard_Setup, interface = None):
+	        print('create keyboard')
+	        self.keyboard = Keyboard()
+	        self.keyboard_setup = keyboard_setup
+	        self.interface = interface
+	        self.set_to_init_values()
+	        
+	    def set_to_init_values(self):
+	        self.n_presses = 0
+	        self.text = ""
+	        self.t_first_input = 0
+	        self.t_last_empty = 0
+	        self.t_return = 0
+	        
+	    def set_interface(self, interface):
+	        self.interface = interface
+	        
+	    def register_times(self, key):
+	        t = clock.time()
+	        if not self.n_presses and not self.is_ctrl_char(key):
+	            self.t_first_input = t
+	        if not self.text and not self.is_ctrl_char(key):
+	            self.t_last_empty = t
+	        if self.is_ctrl_char(key) and \
+	            self.keyboard_setup.ctrl_char_mapping[key] == 'return':
+	            self.t_return = t
+	        
+	    def add_char_to_end(self, char):
+	        self.text += char
+	        
+	    def remove_char_from_end(self):
+	        if self.text == '': return
+	        self.text = self.text[:-1]
+	        
+	    def is_ctrl_char(self, key: str):
+	        return key in self.keyboard_setup.ctrl_char_mapping.keys()
+	        
+	    def parse_ctrl_char(self, key: str):
+	        action = self.keyboard_setup.ctrl_char_mapping[key]
+	        
+	        if action == 'return':
+	            self.is_done = True
+	        elif action == 'remove_char_from_end':
+	            self.remove_char_from_end()
+	        elif action == 'repeat_cue':
+	            pass
+	        
+	    def parse_char(self, key: str):
+	        if key == 'space': self.add_char_to_end(' ')
+	        else: self.add_char_to_end(self.keyboard.to_chr(key))
+	    
+	    def parse_key_press(self, key: str):
+	        if self.is_ctrl_char(key): self.parse_ctrl_char(key)
+	        else: self.parse_char(key)
+	        
+	    def take_input(self):
+	        self.is_done = False
+	        while not self.is_done:
+	            key, _ = self.keyboard.get_key()
+	            print(key)
+	            self.register_times(key)
+	            self.parse_key_press(key)
+	            self.interface.display.set_input_text(self.text)
+	        return self.text, self.t_first_input
+	
+	
+	
+	
+	
+	
+	
+	
+	class UI:
+	    def __init__(self, display: Display = None, audio: Audio = None,
+	                 keyboard: Keyboard_Input = None):
+	        print('creating ui')
+	        self.display: Display = display if display else Display()
+	        self.audio: Audio = audio if audio else Audio()
+	        self.keyboard: Keyboard_Input = keyboard.set_interface(self)\
+	            if keyboard else Keyboard_Input(self)
+	
+	class Experiment:
+	    def __init__(self, interface, input_name):
+	        self.interface = interface
+	        self.spacing_model = SpacingModel()
+	        self.load_csv(self.spacing_model, input_name)
+	        
+	        
+	    def load_csv(self, model, input_):
+	        items_ = []
+	        if 'csv' in input_:
+	            with open(pool[input_]) as f:
+	                lines = f.readlines()
+	                for i, line in enumerate(lines[1:]):
+	                    cells = line.split(',')
+	                    items_.append(Fact(i, cells[1], str(cells[2]).lower()))
+	        else:
+	            items_ = input_
+	        random.shuffle(items_)
+	        for item in items_:
+	            model.add_fact(item)
+	            
+	        
+	    def get_next_item(self):
+	        self.item = self.spacing_model.get_next_fact( \
+	                        current_time = self.current_trial_start_time)
+	        return self.item
+	    
+	    def present_cue(self):
+	        self.interface.play_audio(self.item.question)
+	        # if self.item.cue.cue_type == 'audio':
+	        #     self.output.play_audio(self.cue.text)
+	        # elif self.item.cue.cue_type == 'text':
+	        #     text = Text(self.item.cue.text, 50)
+	        #     self.output.show_texts_on_screen([text])
+	    
+	    def show_correct_answer(self):
+	        text = Text(item.correct_answer, y= 50)
+	        self.output.show_texts_on_canvas([text])
+	        
+	    def get_iteration_statistics(self):
+	        iteration_statistics = {
+	            'cue': self.item.cue, \
+	            'answer': self.item.answer, \
+	            'response': self.response, \
+	            'correct': self.correct, \
+	            'response_time': self.rt
+	            }
+	        return iteration_statistics
+	    
+	    def run_one_item(self):
+	        self.current_trial_start_time = clock.time()
+	        self.get_next_item()
+	        self.present_cue()
+	        if item.first_presentation: self.show_correct_answer()
+	        self.response, self.rt = self.interface.get_text_input()
+	        self.correct = self.response == self.cue.answer
+	        return self.get_iteration_statistics()
+	__end__
+	set _prepare ""
+
 define loop Relative_pitch_loop_mask
 	set source table
 	set repeat 1
@@ -822,6 +1054,7 @@ define sketchpad changegroup
 define sequence experiment
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
+	run Class_Struggle always
 	run slimstampen_setup always
 	run instructions always
 	run learning_session_setup always
@@ -2031,21 +2264,7 @@ define inline_script slimstampen_setup
 	set description "Executes Python code"
 	___run__
 	import random
-	m = SpacingModel()
-	minstruments = SpacingModel()
-	mRelative = SpacingModel()
 	
-	# Add some study facts to the model (you could also read them from a CSV file)
-	'''facts = [Fact(1, "hello", "bonjour"),
-			Fact(2, "dog", "chien"),
-			Fact(3, "cat", "chat"),
-			Fact(4, "computer", "ordinateur"),
-			Fact(5, "house", "maison"),
-			Fact(6, "car", "voiture"),
-			Fact(7, "fish", "poisson"),
-			Fact(8, "bottle", "bouteille")]
-	'''
-	# doing this by hand for now (only whole pitches)
 	factsinstrument = [Fact(1,"accordeon", "accordeon"),
 			 Fact(2,"clarinet", "clarinet"),
 		     Fact(3,"drums", "drums"),
@@ -2065,9 +2284,24 @@ define inline_script slimstampen_setup
 			 Fact(4, "b4", "b"),
 			 Fact(5, "c4", "c")]
 	
+	
+	
+	
+	#m = SpacingModel()
+	#minstruments = SpacingModel()
+	#mRelative = SpacingModel()
+	
+	# doing this by hand for now (only whole pitches)
+	
+	interface = UI()
+	m = Experiment(interface, facts)
+	minstruments= Experiment(interface, factsinstrument)
+	mRelative = Experiment(interface, 'namedIntervals.csv')
+	
 	random.shuffle(facts)
 	
 	factsRelative = []
+	
 	with open(pool['namedIntervals.csv']) as f:
 		lines = f.readlines()
 		for i, line in enumerate(lines[1:]):
@@ -2075,12 +2309,13 @@ define inline_script slimstampen_setup
 			factsRelative.append(Fact(i, cells[1], str(cells[2]).lower()))
 	random.shuffle(factsRelative)
 	
-	for fact in facts:
+	'''for fact in facts:
 		m.add_fact(fact)
 	for fact in factsinstrument:
 		minstruments.add_fact(fact)
 	for fact in factsRelative:
 		mRelative.add_fact(fact)
+		'''
 	__end__
 	___prepare__
 	from __future__ import division
