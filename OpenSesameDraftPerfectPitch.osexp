@@ -492,18 +492,57 @@ define loop Relative_pitch_loop_no_mask_
 	setcycle 0 empty_column ""
 	run new_sequence_2_2_1
 
-define loop Single_notes_Masking
-	set source_file ""
-	set source table
-	set repeat 1
-	set order sequential
-	set description "Repeatedly runs another item"
-	set cycles 1
-	set continuous no
-	set break_if_on_first yes
-	set break_if never
-	setcycle 0 empty_column ""
-	run new_sequence_1
+define inline_script Run_Trial_Item
+	set description "Executes Python code"
+	___run__
+	def run_trial_item(spacing_model, condition, mask, test):
+	    trial_start_time = clock.time()
+	    
+	    next_fact, new_inst = \
+	    	spacing_model.get_next_fact(current_time = \
+	    							trial_start_time)
+	    
+	    cue = next_fact.question
+	    answer = next_fact.answer
+	    
+	    results = ui.present_item(cue, answer)
+	    
+	    rt = results['time'] - trial_start_time \
+	    	if not results['response_has_been_erased'] \
+	    		else float('inf')
+	    		
+	    correct = results['correct']
+	    user_answer = results['response']
+	    
+	    # response = Response(next_fact, trial_start_time, \
+	    # 	rt, correct, "instrument", "train")
+	    # , start_time, rt, correct, condition, mask, test, user_answer
+	    
+	    response = Response(fact= next_fact, \
+	        start_time= trial_start_time, rt= rt, correct= correct, \
+	        condition= condition, mask= mask, test= test,\
+	        user_answer= user_answer)
+	    
+	        # rt, correct, "instrument", "mask", "train", keyboard_response)
+	    
+	    spacing_model.register_response(response) 
+	    
+	    clock.sleep(var.feedback_duration)
+	    
+	    # Clear the screen between trials
+	    ui.clear_screen()
+	    
+	    clock.sleep(var.inter_trial_interval)
+	    
+	    # Check if time is up
+	    if clock.time() - var.session_start_time >= var.session_duration:
+	    	var.time_up = True
+	    	
+	    # Increment trial number
+	    var.trial_num += 1
+	    
+	__end__
+	set _prepare ""
 
 define loop Single_notes_no_masking
 	set source_file ""
@@ -516,7 +555,7 @@ define loop Single_notes_no_masking
 	set break_if_on_first yes
 	set break_if never
 	setcycle 0 empty_column ""
-	run new_sequence_1_1
+	run pitch_wo_mask_sequence
 
 define loop TestingTrial
 	set source_file ""
@@ -1259,6 +1298,7 @@ define sequence UI
 	set description "Runs a number of items in sequence"
 	run ClassDefinitions always
 	run UI_Setup always
+	run Run_Trial_Item always
 
 define inline_script UI_Class
 	set description "Executes Python code"
@@ -1369,7 +1409,7 @@ define sequence experiment
 	run slimstampen_setup always
 	run instructions always
 	run learning_session_setup always
-	run Single_notes_Masking always
+	run pitch_w_mask always
 	run changegroup always
 	run Single_notes_no_masking always
 	run intervals always
@@ -1894,25 +1934,16 @@ define loop new_loop
 	setcycle 0 empty_column ""
 	run ""
 
+define inline_script new_mask
+	set description "Executes Python code"
+	___run__
+	run_trial_item(minstruments, "instrument", "mask", "train")
+	__end__
+	set _prepare ""
+
 define sequence new_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
-
-define sequence new_sequence_1
-	set flush_keyboard yes
-	set description "Runs a number of items in sequence"
-	run Training_instructions always
-	run while_there_is_time_left always
-	run Testing_instructions always
-	run Testingblock_mask always
-
-define sequence new_sequence_1_1
-	set flush_keyboard yes
-	set description "Runs a number of items in sequence"
-	run Training_instructions_1 always
-	run while_there_is_time_left_1 always
-	run Testing_instructions_1 always
-	run Testingblock_1 always
 
 define sequence new_sequence_2
 	set flush_keyboard yes
@@ -1938,6 +1969,34 @@ define sketchpad new_sketchpad
 	set duration keypress
 	set description "Displays stimuli"
 
+define inline_script new_trial
+	set description "Executes Python code"
+	___run__
+	run_trial_item(m, "pitch", "mask", "train")
+	__end__
+	set _prepare ""
+
+define loop pitch_w_mask
+	set source_file ""
+	set source table
+	set repeat 1
+	set order sequential
+	set description "Repeatedly runs another item"
+	set cycles 1
+	set continuous no
+	set break_if_on_first yes
+	set break_if never
+	setcycle 0 empty_column ""
+	run pitch_w_mask_sequence
+
+define sequence pitch_w_mask_sequence
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Training_instructions always
+	run while_there_is_time_left always
+	run Testing_instructions always
+	run Testingblock_mask always
+
 define loop pitch_while_there_are_items_left
 	set source_file ""
 	set source table
@@ -1952,6 +2011,14 @@ define loop pitch_while_there_are_items_left
 	setcycle 1 pitch f3
 	setcycle 2 pitch g3
 	run ""
+
+define sequence pitch_wo_mask_sequence
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Training_instructions_1 always
+	run while_there_is_time_left_1 always
+	run Testing_instructions_1 always
+	run Testingblock_1 always
 
 define inline_script present_trial
 	set description "Executes Python code"
@@ -2901,6 +2968,8 @@ define inline_script slimstampen_setup
 define sequence trial_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
+	run new_mask always
+	run new_trial always
 	run masking_script always
 	run present_trial always
 
@@ -2921,6 +2990,7 @@ define sequence trial_sequence_2_1
 	run present_trial_2_1 always
 
 define loop while_there_is_time_left
+	set source_file ""
 	set source table
 	set repeat 1000
 	set order random
@@ -2933,6 +3003,7 @@ define loop while_there_is_time_left
 	run trial_sequence
 
 define loop while_there_is_time_left_1
+	set source_file ""
 	set source table
 	set repeat 1000
 	set order random
@@ -2945,6 +3016,7 @@ define loop while_there_is_time_left_1
 	run trial_sequence_1
 
 define loop while_there_is_time_left_2
+	set source_file ""
 	set source table
 	set repeat 1000
 	set order random
@@ -2957,6 +3029,7 @@ define loop while_there_is_time_left_2
 	run trial_sequence_2
 
 define loop while_there_is_time_left_2_1
+	set source_file ""
 	set source table
 	set repeat 1000
 	set order random
