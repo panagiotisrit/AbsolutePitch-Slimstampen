@@ -477,7 +477,7 @@ define loop Relative_pitch_loop_mask
 	set break_if_on_first yes
 	set break_if never
 	setcycle 0 empty_column ""
-	run new_sequence_2_2
+	run interval_w_mask_sequence
 
 define loop Relative_pitch_loop_no_mask_
 	set source_file ""
@@ -490,7 +490,7 @@ define loop Relative_pitch_loop_no_mask_
 	set break_if_on_first yes
 	set break_if never
 	setcycle 0 empty_column ""
-	run new_sequence_2_2_1
+	run interval_wo_mask_sequence
 
 define inline_script Run_Trial_Item
 	set description "Executes Python code"
@@ -498,14 +498,14 @@ define inline_script Run_Trial_Item
 	def run_trial_item(spacing_model, condition, mask, test):
 	    trial_start_time = clock.time()
 	    
-	    next_fact, new_inst = \
+	    next_fact, is_new = \
 	    	spacing_model.get_next_fact(current_time = \
 	    							trial_start_time)
 	    
 	    cue = next_fact.question
 	    answer = next_fact.answer
 	    
-	    results = ui.present_item(cue, answer)
+	    results = ui.present_item(cue, answer, is_new)
 	    
 	    rt = results['time'] - trial_start_time \
 	    	if not results['response_has_been_erased'] \
@@ -514,16 +514,10 @@ define inline_script Run_Trial_Item
 	    correct = results['correct']
 	    user_answer = results['response']
 	    
-	    # response = Response(next_fact, trial_start_time, \
-	    # 	rt, correct, "instrument", "train")
-	    # , start_time, rt, correct, condition, mask, test, user_answer
-	    
 	    response = Response(fact= next_fact, \
 	        start_time= trial_start_time, rt= rt, correct= correct, \
 	        condition= condition, mask= mask, test= test,\
 	        user_answer= user_answer)
-	    
-	        # rt, correct, "instrument", "mask", "train", keyboard_response)
 	    
 	    spacing_model.register_response(response) 
 	    
@@ -1439,6 +1433,22 @@ define loop instruments_while_items_left
 	setcycle 2 instrument harp
 	run ""
 
+define sequence interval_w_mask_sequence
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Training_instructions_2 always
+	run while_there_is_time_left_2 always
+	run Testing_instructions_2 always
+	run Testingblock_2 always
+
+define sequence interval_wo_mask_sequence
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Training_instructions_2_1 always
+	run while_there_is_time_left_2_1 always
+	run Testing_instructions_2_1 always
+	run Testingblock_2_1 always
+
 define sketchpad intervals
 	set duration keypress
 	set description "Displays stimuli"
@@ -1941,6 +1951,13 @@ define inline_script new_mask
 	__end__
 	set _prepare ""
 
+define inline_script new_mask_2
+	set description "Executes Python code"
+	___run__
+	run_trial_item(minstruments, "instrument", "mask", "train")
+	__end__
+	set _prepare ""
+
 define sequence new_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
@@ -1948,22 +1965,6 @@ define sequence new_sequence
 define sequence new_sequence_2
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
-
-define sequence new_sequence_2_2
-	set flush_keyboard yes
-	set description "Runs a number of items in sequence"
-	run Training_instructions_2 always
-	run while_there_is_time_left_2 always
-	run Testing_instructions_2 always
-	run Testingblock_2 always
-
-define sequence new_sequence_2_2_1
-	set flush_keyboard yes
-	set description "Runs a number of items in sequence"
-	run Training_instructions_2_1 always
-	run while_there_is_time_left_2_1 always
-	run Testing_instructions_2_1 always
-	run Testingblock_2_1 always
 
 define sketchpad new_sketchpad
 	set duration keypress
@@ -1973,6 +1974,20 @@ define inline_script new_trial
 	set description "Executes Python code"
 	___run__
 	run_trial_item(m, "pitch", "mask", "train")
+	__end__
+	set _prepare ""
+
+define inline_script new_trial_2
+	set description "Executes Python code"
+	___run__
+	run_trial_item(m, "pitch", "no_mask", "train")
+	__end__
+	set _prepare ""
+
+define inline_script new_trial_3
+	set description "Executes Python code"
+	___run__
+	run_trial_item(m, "pitch", "no_mask", "train")
 	__end__
 	set _prepare ""
 
@@ -2976,11 +2991,14 @@ define sequence trial_sequence
 define sequence trial_sequence_1
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
+	run new_trial_2 always
 	run present_trial_1 always
 
 define sequence trial_sequence_2
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
+	run new_mask_2 always
+	run new_trial_3 always
 	run masking_script_1 always
 	run present_trial_2 always
 
