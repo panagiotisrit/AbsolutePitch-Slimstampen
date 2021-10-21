@@ -274,6 +274,7 @@ define inline_script Class_Struggle
 	set _prepare ""
 
 define loop Relative_pitch_loop_mask
+	set source_file ""
 	set source table
 	set repeat 1
 	set order random
@@ -299,6 +300,7 @@ define loop Relative_pitch_loop_no_mask_
 	run new_sequence_2_2_1
 
 define loop Single_notes_Masking
+	set source_file ""
 	set source table
 	set repeat 1
 	set order sequential
@@ -311,6 +313,7 @@ define loop Single_notes_Masking
 	run new_sequence_1
 
 define loop Single_notes_no_masking
+	set source_file ""
 	set source table
 	set repeat 1
 	set order sequential
@@ -532,7 +535,7 @@ define inline_script Testingblock_1
 	    correct = keyboard_response == test_fact.answer
 	    
 	    # Log response
-	    response = Response(test_fact, trial_start_time, rt, correct, condition, "no_mask", "test")
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "no_mask", "test", keyboard_response)
 	    m.register_response(response) 
 	   
 	    
@@ -701,7 +704,7 @@ define inline_script Testingblock_2
 	    correct = regex.sub('', keyboard_response) == regex.sub('', test_fact.answer)
 	    
 	    # Log response
-	    response = Response(test_fact, trial_start_time, rt, correct, condition, "mask", "test")
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "mask", "test", regex.sub('', keyboard_response))
 	    if condition == "relative":
 	        mRelative.register_response(response) 
 	    elif condition == "instrument":
@@ -878,7 +881,7 @@ define inline_script Testingblock_2_1
 	    correct = regex.sub('', keyboard_response) == regex.sub('', test_fact.answer)
 	    
 	    # Log response
-	    response = Response(test_fact, trial_start_time, rt, correct, condition,"no_mask", "test")
+	    response = Response(test_fact, trial_start_time, rt, correct, condition,"no_mask", "test", regex.sub('', keyboard_response))
 	    if condition == "relative":
 	        mRelative.register_response(response) 
 	    
@@ -995,7 +998,7 @@ define inline_script Testingblock_mask
 	    correct = keyboard_response == test_fact.answer
 	    
 	    # Log response
-	    response = Response(test_fact, trial_start_time, rt, correct, condition, "mask", "test")
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "mask", "test", keyboard_response)
 	    if condition == "pitch":
 	        m.register_response(response) 
 	    elif condition == "instrument":
@@ -1196,7 +1199,7 @@ define inline_script masking_script
 	correct = keyboard_response == answerinst
 	
 	# Log response
-	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "mask", "train")
+	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "mask", "train", keyboard_response)
 	minstruments.register_response(response) 
 	
 	# Show feedback
@@ -1304,7 +1307,7 @@ define inline_script masking_script_1
 	correct = keyboard_response == answerinst
 	
 	# Log response
-	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "mask", "train")
+	response = Response(next_factinst, trial_start_time, rt, correct, "instrument", "mask", "train", keyboard_response)
 	minstruments.register_response(response) 
 	
 	# Show feedback
@@ -1754,7 +1757,7 @@ define inline_script present_trial
 	correct = keyboard_response == answer
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "mask", "train")
+	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "mask", "train", keyboard_response)
 	m.register_response(response) 
 	
 	# Show feedback
@@ -1899,7 +1902,7 @@ define inline_script present_trial_1
 	correct = keyboard_response == answer
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "no_mask", "train")
+	response = Response(next_fact, trial_start_time, rt, correct, "pitch", "no_mask", "train", keyboard_response)
 	m.register_response(response) 
 	
 	# Show feedback
@@ -2058,7 +2061,7 @@ define inline_script present_trial_2
 	correct = regex.sub('', keyboard_response) == regex.sub('', answer)
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct, "relative", "mask", "train")
+	response = Response(next_fact, trial_start_time, rt, correct, "relative", "mask", "train", regex.sub('', keyboard_response))
 	mRelative.register_response(response) 
 	
 	# Show feedback
@@ -2216,7 +2219,7 @@ define inline_script present_trial_2_1
 	correct = regex.sub('', keyboard_response) == regex.sub('', answer)
 	
 	# Log response
-	response = Response(next_fact, trial_start_time, rt, correct, "relative", "no_mask", "train")
+	response = Response(next_fact, trial_start_time, rt, correct, "relative", "no_mask", "train", regex.sub('', keyboard_response))
 	mRelative.register_response(response) 
 	
 	# Show feedback
@@ -2323,7 +2326,7 @@ define inline_script slimstampen_setup
 	from collections import namedtuple
 	
 	Fact = namedtuple("Fact", "fact_id, question, answer")
-	Response = namedtuple("Response", "fact, start_time, rt, correct, condition, mask, test")
+	Response = namedtuple("Response", "fact, start_time, rt, correct, condition, mask, test, user_answer")
 	Encounter = namedtuple("Encounter", "activation, time, reaction_time, decay")
 	
 	
