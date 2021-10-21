@@ -2284,21 +2284,21 @@ define inline_script slimstampen_setup
 			 Fact(4, "b4", "b"),
 			 Fact(5, "c4", "c")]
 	
+	random.shuffle(facts)
 	
 	
-	
-	#m = SpacingModel()
-	#minstruments = SpacingModel()
-	#mRelative = SpacingModel()
+	m = SpacingModel()
+	minstruments = SpacingModel()
+	mRelative = SpacingModel()
 	
 	# doing this by hand for now (only whole pitches)
 	
-	interface = UI()
-	m = Experiment(interface, facts)
-	minstruments= Experiment(interface, factsinstrument)
-	mRelative = Experiment(interface, 'namedIntervals.csv')
+	#interface = UI()
+	#m = Experiment(interface, facts)
+	#minstruments= Experiment(interface, factsinstrument)
+	#mRelative = Experiment(interface, 'namedIntervals.csv')
 	
-	random.shuffle(facts)
+	
 	
 	factsRelative = []
 	
@@ -2309,13 +2309,12 @@ define inline_script slimstampen_setup
 			factsRelative.append(Fact(i, cells[1], str(cells[2]).lower()))
 	random.shuffle(factsRelative)
 	
-	'''for fact in facts:
+	for fact in facts:
 		m.add_fact(fact)
 	for fact in factsinstrument:
 		minstruments.add_fact(fact)
 	for fact in factsRelative:
 		mRelative.add_fact(fact)
-		'''
 	__end__
 	___prepare__
 	from __future__ import division
