@@ -1,52 +1,52 @@
 trial,start_time,rt,correct,condition,mask,test,fact_id,question,answer,alpha
-1,12622.985082009109,1909.5294759899843,True,pitch,mask,train,5,c4,c,0.3
-2,27446.5119910019,inf,True,pitch,mask,test,1,c3,c,0.3
-3,42938.032822014065,7630.634611006826,True,pitch,mask,test,3,g3,g,0.3
-4,68632.77642402682,inf,False,pitch,mask,test,2,e3,e,0.3
-5,133813.48835601239,2367.103586992016,False,pitch,mask,test,5,c4,c,0.3
-6,149854.8459490121,4048.950311000226,True,pitch,mask,test,4,b4,b,0.3
-7,156853.33130101208,2770.338233996881,True,pitch,no_mask,train,1,c3,c,0.3
-8,161823.6390890088,1787.693190999562,True,pitch,no_mask,test,5,c4,c,0.25898437500000004
-9,164828.49808700848,4367.961237003328,False,pitch,no_mask,test,2,e3,e,0.3
-10,170397.55814202363,10961.919828987448,False,pitch,no_mask,test,4,b4,b,0.3
-11,182603.4902560059,6285.610154009191,False,pitch,no_mask,test,3,g3,g,0.3
-12,190390.4195370269,4487.173651985358,True,pitch,no_mask,test,1,c3,c,0.300390625
+1,10965.835651004454,1336.0173839901108,True,pitch,mask,train,1,c3,c,0.3
+2,23465.81767499447,3205.479424999794,False,pitch,mask,test,4,b4,b,0.3
+3,37548.83282398805,1827.6968880090863,False,pitch,mask,test,1,c3,c,0.3
+4,47932.540838985005,inf,False,pitch,mask,test,2,e3,e,0.3
+5,61798.75435100985,2747.1737029845826,False,pitch,mask,test,5,c4,c,0.3
+6,78265.63525400707,inf,True,pitch,mask,test,3,g3,g,0.3
+7,90285.29607699602,4305.308740993496,False,pitch,no_mask,train,4,b4,b,0.3
+8,97110.38515699329,4229.655183007708,True,pitch,no_mask,test,5,c4,c,0.3
+9,102749.28420200013,3150.526732002618,True,pitch,no_mask,test,3,g3,g,0.3
+10,107299.08473498654,3791.1561360233463,True,pitch,no_mask,test,4,b4,b,0.300390625
+11,112465.93289799057,1879.3176310136914,True,pitch,no_mask,test,2,e3,e,0.3
+12,119849.76372000528,1994.9579940002877,True,pitch,no_mask,test,1,c3,c,0.250390625
 
-1,6222.133883013157,2618.110481998883,True,instrument,mask,train,7,harmonica,harmonica,0.3
-2,17221.407396020368,6988.225763983792,True,instrument,mask,test,4,electric_guitar,electric guitar,0.3
-3,38185.04346301779,2894.71521100495,True,instrument,mask,test,3,drums,drums,0.3
-4,51724.80126400478,inf,True,instrument,mask,test,10,piano,piano,0.3
-5,123475.3758010047,6929.598374001216,True,instrument,mask,test,1,accordeon,accordeon,0.3
-6,137448.7740950135,9044.431649002945,True,instrument,mask,test,6,frenchhorn,french horn,0.3
-7,198231.00675700698,2341.440957010491,True,instrument,mask,train,7,harmonica,harmonica,0.3
-8,244669.82426302275,7418.520845996682,True,instrument,mask,test,5,flute,flute,0.3
-9,283351.77130100783,inf,True,instrument,mask,test,6,frenchhorn,french horn,0.3
-10,345597.4128880189,inf,True,instrument,mask,test,1,accordeon,accordeon,0.3
-11,371726.6428320145,4312.318868993316,True,instrument,mask,test,8,harp,harp,0.3
-12,383315.4676220147,8331.128188001458,True,instrument,mask,test,10,piano,piano,0.3
+1,6270.824887003982,1186.248499987414,True,instrument,mask,train,2,clarinet,clarinet,0.3
+2,14462.03212000546,6299.770148994867,True,instrument,mask,test,2,clarinet,clarinet,0.3
+3,27849.060022999765,7987.8692360071,True,instrument,mask,test,5,flute,flute,0.3
+4,41165.52300500916,5005.771021998953,True,instrument,mask,test,8,harp,harp,0.3
+5,54466.20204500505,5264.960798987886,True,instrument,mask,test,9,maraccas,maraccas,0.3
+6,66031.7502609978,8144.042936008191,False,instrument,mask,test,1,accordeon,accordeon,0.3
+7,125057.85127298441,7512.1496909996495,True,instrument,mask,train,5,flute,flute,0.3
+8,140654.95793300215,6944.662498979596,True,instrument,mask,test,6,frenchhorn,french horn,0.3
+9,158332.29425898753,2767.262291017687,True,instrument,mask,test,3,drums,drums,0.3
+10,167866.10524498974,inf,True,instrument,mask,test,10,piano,piano,0.3
+11,189099.24456098815,7234.412629011786,True,instrument,mask,test,5,flute,flute,0.300390625
+12,206516.62231600494,4232.143105997238,True,instrument,mask,test,8,harp,harp,0.3
 
-1,204680.96512102056,2040.9706679929513,True,relative,mask,train,3,11,"major seventh 
+1,134282.48160600197,2456.844786996953,True,relative,mask,train,3,11,"major seventh 
 ",0.3
-2,254104.83941901475,inf,False,relative,mask,test,3,11,"major seventh 
+2,150765.75374000822,2218.7806029978674,True,relative,mask,test,4,12,"perfect octave 
 ",0.3
-3,303710.8735180227,inf,True,relative,mask,test,1,4,"major third 
+3,163232.486236986,1796.93998300354,True,relative,mask,test,0,0,"perfect unison
 ",0.3
-4,366274.3978180224,2048.7949129892513,True,relative,mask,test,2,7,"perfect fifth 
+4,181482.51843699836,5041.252360009821,True,relative,mask,test,1,4,"major third 
 ",0.3
-5,378312.7678690071,2043.77671299153,True,relative,mask,test,0,0,"perfect unison
+5,198049.35995399137,inf,True,relative,mask,test,2,7,"perfect fifth 
 ",0.3
-6,393736.8636110041,2759.663258009823,True,relative,mask,test,4,12,"perfect octave 
+6,212765.1495159953,inf,True,relative,mask,test,3,11,"major seventh 
 ",0.3
-7,401547.23893501796,5251.825007988373,True,relative,no_mask,train,1,4,"major third 
+7,226900.8026520023,2042.20422799699,True,relative,no_mask,train,4,12,"perfect octave 
 ",0.3
-8,413175.5309920118,inf,False,relative,no_mask,test,1,4,"major third 
+8,233654.42730800714,2549.433894979302,True,relative,no_mask,test,2,7,"perfect fifth 
+",0.3
+9,239932.51670099562,1865.6236100068782,True,relative,no_mask,test,0,0,"perfect unison
+",0.3
+10,244965.12726298533,inf,False,relative,no_mask,test,3,11,"major seventh 
 ",0.300390625
-9,428803.24243201176,inf,True,relative,no_mask,test,2,7,"perfect fifth 
-",0.3
-10,447012.0457930025,inf,True,relative,no_mask,test,3,11,"major seventh 
-",0.324609375
-11,461035.3870380204,1875.825052993605,True,relative,no_mask,test,0,0,"perfect unison
-",0.3
-12,466638.0924350233,inf,True,relative,no_mask,test,4,12,"perfect octave 
+11,255515.93770299223,3576.861158013344,True,relative,no_mask,test,4,12,"perfect octave 
+",0.300390625
+12,262482.7635329857,inf,True,relative,no_mask,test,1,4,"major third 
 ",0.3
 
