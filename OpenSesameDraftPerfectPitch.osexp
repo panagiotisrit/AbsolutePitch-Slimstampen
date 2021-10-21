@@ -1,7 +1,7 @@
 ---
 API: 2.1
 OpenSesame: 3.3.10
-Platform: posix
+Platform: nt
 ---
 set width 1024
 set uniform_coordinates yes
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
+set experiment_path "C:\\Users\\Gebruiker\\Documents\\University\\User_Models\\Other\\AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -36,10 +36,50 @@ set clock_backend psycho
 set canvas_backend psycho
 set background black
 
+define inline_script Audio
+	set description "Executes Python code"
+	___run__
+	class Audio:
+	    def __init__(self):
+	        self.audio = None
+	    
+	    def play_audio_from_pool(self, file_name: str):
+	        src = pool[file_name + '.wav']
+	        self.audio = Sampler(src)
+	        self.audio.play()
+	        
+	    def play_audio_from_frequency(self, frequency: int):
+	        self.audio = Synth(freq=frequency, length=1000, attack=0, decay=5)
+	        self.audio.play()
+	        
+	    def play_audio(self, source):
+	        if type(source) == int:
+	            self.play_audio_from_frequency(source)
+	        elif type(source) == str:
+	            self.play_audio_from_pool(source)
+	        elif type(source) == tuple:
+	            for s in source:
+	                self.play_audio(s)
+	                
+	    def stop_audio(self):
+	        self.audio.stop()
+	__end__
+	set _prepare ""
+
 define sketchpad Change_intervals_conditions
 	set duration keypress
 	set description "Displays stimuli"
 	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now changing to intervals no masking" x=0 y=0 z_index=0
+
+define sequence ClassDefinitions
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Text_Style always
+	run Display always
+	run Audio always
+	run Keyboard_Input always
+	run Keyboard_Setup_Class always
+	run UI_Class always
 
 define inline_script Class_Struggle
 	set description "Executes Python code"
@@ -270,6 +310,159 @@ define inline_script Class_Struggle
 	        self.response, self.rt = self.interface.get_text_input()
 	        self.correct = self.response == self.cue.answer
 	        return self.get_iteration_statistics()
+	__end__
+	set _prepare ""
+
+define inline_script Display
+	set description "Executes Python code"
+	___run__
+	class Display:
+	    answer_style: Text_Style = Text_Style(50, 20, 'White')
+	    input_style: Text_Style = Text_Style(100, 20, 'White')
+	    feedback_style_positive: Text_Style = Text_Style(150, 20, 'Green')
+	    feedback_style_negative: Text_Style = Text_Style(150, 20, 'Red')
+	    feedback_style_neutral: Text_Style = Text_Style(150, 20, 'White')
+	    
+	    def __init__(self):
+	        self.answer_text: str = ""
+	        self.input_text: str = ""
+	        self.feedback_text: str = ""
+	        self.feedback_mood: str = "neutral"
+	        self.canvas: Canvas = Canvas()
+	        
+	    def set_answer_text(self, answer_text: str, update_display: bool = True):
+	        self.answer_text = answer_text
+	        if update_display: self.show()
+	        
+	    def set_input_text(self, input_text: str, update_display: bool = True):
+	        self.input_text = input_text
+	        if update_display: self.show()
+	        
+	    def set_feedback_text(self, feedback_text: str, feedback_mood: str,\
+	                          update_display: bool = True):
+	        self.feedback_text = feedback_text
+	        self.feedback_mood = feedback_mood
+	        if update_display: self.show()
+	        
+	    def clear(self, update_display: bool = True):
+	        self.answer_text = ""
+	        self.input_text = ""
+	        self.feedback_text = ""
+	        self.feedback_mood = ""
+	        if update_display: self.show()
+	        
+	    def add_text(self, text: str, style: Text_Style):
+	        print('add_text')
+	        self.canvas.text(text, y= style.y, \
+	                         font_size= style.font_size, color= style.color)
+	        
+	    def show(self):
+	        print('showing screen')
+	        self.canvas.clear()
+	        
+	        if self.answer_text:
+	            self.add_text(self.answer_text, self.answer_style)
+	        if self.input_text:
+	            self.add_text(self.input_text, self.input_style)
+	        
+	        if self.feedback_text:
+	            if self.feedback_mood == 'positive':
+	                self.add_text(self.feedback_text,\
+	                    self.feedback_style_positive)
+	            elif self.feedback_mood == 'negative':
+	                self.add_text(self.feedback_text,\
+	                    self.feedback_style_negative)
+	            elif self.feedback_mood == 'neutral':
+	                self.add_text(self.feedback_text,\
+	                    self.feedback_style_neutral)
+	            else:
+	                print('Display: error: unknown feedback mood {}'\
+	                    .format(self.feedback_mood))
+	                exit(-1)
+	            
+	        self.canvas.prepare()
+	        self.canvas.show()
+	__end__
+	set _prepare ""
+
+define inline_script Keyboard_Input
+	set description "Executes Python code"
+	___run__
+	class Keyboard_Input:
+	    def __init__(self, keyboard_setup: Keyboard_Setup, interface = None):
+	        self.keyboard = Keyboard()
+	        self.keyboard_setup = keyboard_setup
+	        self.interface = interface
+	        self.set_to_init_values()
+	        
+	    def set_to_init_values(self):
+	        self.n_presses = 0
+	        self.text = ""
+	        self.t_first_input = 0
+	        self.t_last_empty = 0
+	        self.t_return = 0
+	        self.has_been_erased_completely = False
+	        
+	    def set_interface(self, interface):
+	        self.interface = interface
+	        
+	    def register_times(self, key):
+	        t = clock.time()
+	        if not self.n_presses and not self.is_ctrl_char(key):
+	            self.t_first_input = t
+	        if not self.text and not self.is_ctrl_char(key):
+	            self.t_last_empty = t
+	        if self.is_ctrl_char(key) and \
+	            self.keyboard_setup.ctrl_char_mapping[key] == 'return':
+	            self.t_return = t
+	        
+	    def add_char_to_end(self, char):
+	        self.text += char
+	        
+	    def remove_char_from_end(self):
+	        if self.text == '': return
+	        if len(self.text) == 1: self.has_been_erased_completely = True
+	        self.text = self.text[:-1]
+	        
+	    def is_ctrl_char(self, key: str):
+	        return key in self.keyboard_setup.ctrl_char_mapping.keys()
+	        
+	    def parse_ctrl_char(self, key: str):
+	        action = self.keyboard_setup.ctrl_char_mapping[key]
+	        
+	        if action == 'return':
+	            self.is_done = True
+	        elif action == 'remove_char_from_end':
+	            self.remove_char_from_end()
+	        elif action == 'repeat_cue':
+	            self.interface.repeat_cue()
+	        
+	    def parse_char(self, key: str):
+	        if key == 'space': self.add_char_to_end(' ')
+	        else: self.add_char_to_end(self.keyboard.to_chr(key))
+	    
+	    def parse_key_press(self, key: str):
+	        if self.is_ctrl_char(key): self.parse_ctrl_char(key)
+	        else: self.parse_char(key)
+	        
+	    def take_input(self):
+	        self.set_to_init_values()
+	        self.is_done = False
+	        while not self.is_done:
+	            key, _ = self.keyboard.get_key()
+	            print(key)
+	            self.register_times(key)
+	            self.parse_key_press(key)
+	            self.interface.display.set_input_text(self.text)
+	        return self.text, self.t_first_input, self.has_been_erased_completely
+	__end__
+	set _prepare ""
+
+define inline_script Keyboard_Setup_Class
+	set description "Executes Python code"
+	___run__
+	class Keyboard_Setup(NamedTuple):
+	    ctrl_char_mapping: dict
 	__end__
 	set _prepare ""
 
@@ -1029,6 +1222,18 @@ define inline_script Testingblock_mask
 	__end__
 	set _prepare ""
 
+define inline_script Text_Style
+	set description "Executes Python code"
+	___run__
+	from typing import NamedTuple
+	
+	class Text_Style(NamedTuple):
+	    y: int
+	    font_size: int
+	    color: str
+	__end__
+	set _prepare ""
+
 define sketchpad Training_instructions
 	set duration keypress
 	set description "Displays stimuli"
@@ -1049,6 +1254,108 @@ define sketchpad Training_instructions_2_1
 	set description "Displays stimuli"
 	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=-96 y=-32 z_index=0
 
+define sequence UI
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run ClassDefinitions always
+	run UI_Setup always
+
+define inline_script UI_Class
+	set description "Executes Python code"
+	___run__
+	class UI:
+	    class Item_State():
+	        cue: str = ''
+	        answer: str = ''
+	        response: str = ''
+	        response_has_been_erased: bool = False
+	        time: float = float('inf')
+	        correct: bool = False
+	        
+	        def as_dict(self):
+	            return {'cue': self.cue,
+	                    'answer': self.answer,
+	                    'response': self.response,
+	                    'response_has_been_erased': self.response_has_been_erased,
+	                    'time': self.time,
+	                    'correct': self.correct
+	            }
+	        
+	    def __init__(self, display: Display = None, audio: Audio = None,
+	                 keyboard: Keyboard_Input = None):
+	        self.display: Display = display if display else Display()
+	        self.audio: Audio = audio if audio else Audio()
+	        self.keyboard: Keyboard_Input = keyboard \
+	            if keyboard else Keyboard_Input()
+	        self.keyboard.set_interface(self)
+	        
+	        self.set_to_init_values()
+	    
+	    def set_to_init_values(self):
+	        self.item_state = UI.Item_State()
+	        
+	    def clear_screen(self):
+	        self.display.clear()
+	
+	    def present_cue(self):
+	        self.audio.play_audio_from_pool(self.state.cue)
+	        
+	    def show_answer(self):
+	        self.display.set_answer_text(self.state.answer)
+	        
+	    def repeat_cue(self):
+	        self.present_cue()
+	    
+	    def check_response(self):
+	        self.state.correct = \
+	            (self.state.response == self.state.answer)
+	        
+	    def take_input(self):
+	        self.state.response, self.state.time, \
+	            self.state.response_has_been_erased = \
+	                self.keyboard.take_input()
+	    
+	    def present_feedback(self):
+	        if self.state.correct:
+	            feedback_text = 'correct'
+	            feedback_mood = 'positive'
+	        else:
+	            feedback_text =\
+	                'incorrect. you responded {}, the correct answer was {}'.\
+	                    format(self.state.response, self.state.answer)
+	            feedback_mood = 'negative'
+	            
+	        self.display.set_feedback_text(feedback_text, feedback_mood)
+	        
+	    def set_cue_answer(self, cue, answer):
+	        self.state = UI.Item_State()
+	        self.state.cue = cue
+	        self.state.answer = answer
+	        
+	    def present_item(self, cue, answer, show_answer: bool = False):
+	        self.set_cue_answer(cue, answer)
+	        self.clear_screen()
+	        if show_answer: self.show_answer()
+	        self.present_cue()
+	        self.take_input()
+	        self.check_response()
+	        self.present_feedback()
+	        return self.state.as_dict()
+	        
+	__end__
+	set _prepare ""
+
+define inline_script UI_Setup
+	set description "Executes Python code"
+	___run__
+	ks = Keyboard_Setup({'return': 'return',\
+	                     'backspace': 'remove_char_from_end',\
+	                     '1': 'repeat_cue'})
+	ki = Keyboard_Input(ks)
+	ui = UI(keyboard = ki)
+	__end__
+	set _prepare ""
+
 define sketchpad changegroup
 	set duration keypress
 	set description "Displays stimuli"
@@ -1058,6 +1365,7 @@ define sequence experiment
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 	run Class_Struggle always
+	run UI always
 	run slimstampen_setup always
 	run instructions always
 	run learning_session_setup always
