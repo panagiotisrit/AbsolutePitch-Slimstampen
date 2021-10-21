@@ -317,8 +317,8 @@ define inline_script Class_Struggle
 define inline_script Cue_Parse_Function_Relative_Pitch
 	set description "Executes Python code"
 	___run__
-	mod_interval_to_note = ['c', 'c_sharp', 'd', 'e_flat', 'e', \
-	    'f', 'f_sharp', 'g', 'g_sharp', 'a', 'b_flat', 'b']
+	mod_interval_to_note = ['c', 'c-', 'd', 'd-', 'e', \
+	    'f', 'f-', 'g', 'g-', 'a', 'a-', 'b']
 	note_to_mod_interval = {note: interval for interval, note \
 	                         in enumerate(mod_interval_to_note)}
 	
@@ -326,7 +326,7 @@ define inline_script Cue_Parse_Function_Relative_Pitch
 	    interval_n_octave = interval_c0 // 12
 	    interval_mod_octave = interval_c0 % 12
 	    
-	    note_letter = mod_interval_to_note[interval_mod_octave][0]
+	    note_letter = mod_interval_to_note[interval_mod_octave]
 	    note_number = interval_n_octave
 	    
 	    note = '{}{}'.format(note_letter, note_number)
