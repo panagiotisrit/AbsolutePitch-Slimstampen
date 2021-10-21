@@ -2696,8 +2696,9 @@ define inline_script slimstampen_setup
 	with open(pool['namedIntervals.csv']) as f:
 		lines = f.readlines()
 		for i, line in enumerate(lines[1:]):
-			cells = line.split(',')
+			cells = line.strip().split(',')
 			factsRelative.append(Fact(i, cells[1], str(cells[2]).lower()))
+			print(cells)
 	random.shuffle(factsRelative)
 	
 	for fact in facts:
