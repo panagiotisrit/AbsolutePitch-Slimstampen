@@ -1354,9 +1354,7 @@ define inline_script UI_Class
 	            feedback_text = 'correct'
 	            feedback_mood = 'positive'
 	        else:
-	            feedback_text =\
-	                'incorrect. you responded {}, the correct answer was {}'.\
-	                    format(self.state.response, self.state.answer)
+	            feedback_text = self.state.answer
 	            feedback_mood = 'negative'
 	            
 	        self.display.set_feedback_text(feedback_text, feedback_mood)
