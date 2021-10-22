@@ -78,9 +78,10 @@ define sequence ClassDefinitions
 	run Text_Style always
 	run Display always
 	run Audio always
-	run Keyboard_Input always
 	run Keyboard_Setup_Class always
+	run Keyboard_Input always
 	run UI_Class always
+	run Model_Package always
 
 define inline_script Class_Struggle
 	set description "Executes Python code"
@@ -311,6 +312,15 @@ define inline_script Class_Struggle
 	        self.response, self.rt = self.interface.get_text_input()
 	        self.correct = self.response == self.cue.answer
 	        return self.get_iteration_statistics()
+	__end__
+	set _prepare ""
+
+define inline_script Create_Model_Packages
+	set description "Executes Python code"
+	___run__
+	pitch_package = Model_Package(m, facts, 'pitch')
+	interval_package = Model_Package(m_relative, facts_relative, 'interval', rp_parse_cue)
+	instrument_package = Model_Package(m_instruments, facts_instruments, 'instrument')
 	__end__
 	set _prepare ""
 
@@ -573,6 +583,22 @@ define inline_script Load_Facts
 	__end__
 	set _prepare ""
 
+define inline_script Model_Package
+	set description "Executes Python code"
+	___run__
+	class Model_Package():
+	    def __init__(self, \
+	                 spacing_model: SpacingModel, \
+	                 facts: list, \
+	                 condition_name: str, \
+	                 cue_parse_function = None):
+	        self.spacing_model = spacing_model
+	        self.facts = facts
+	        self.condition_name = condition_name
+	        self.cue_parse_function = cue_parse_function
+	__end__
+	set _prepare ""
+
 define loop Relative_pitch_loop_mask
 	set source_file ""
 	set source table
@@ -597,7 +623,7 @@ define loop Relative_pitch_loop_mask_1
 	set break_if_on_first yes
 	set break_if never
 	setcycle 0 empty_column ""
-	run interval_w_mask_sequence_1
+	run ""
 
 define loop Relative_pitch_loop_no_mask_
 	set source_file ""
@@ -611,6 +637,99 @@ define loop Relative_pitch_loop_no_mask_
 	set break_if never
 	setcycle 0 empty_column ""
 	run interval_wo_mask_sequence
+
+define inline_script Run_Item
+	set description "Executes Python code"
+	___run__
+	def run_item(fact, model_package, trial_start_time, \
+	             is_masked, learning_or_test, show_answer):
+	    cue = fact.question
+	    
+	    if model_package.cue_parse_function:
+	        cue = model_package.cue_parse_function(cue)
+	
+	    answer = fact.answer
+	    
+	    results = ui.present_item(cue, answer, show_answer)
+	    
+	    rt = results['time'] - trial_start_time \
+	    	if not results['response_has_been_erased'] \
+	    		else float('inf')
+	    		
+	    correct = results['correct']
+	    user_answer = results['response']
+	    
+	    response = Response(fact= fact, \
+	                        start_time= trial_start_time, \
+	                        rt= rt, \
+	                        correct= correct, \
+	                        condition= model_package.condition_name, \
+	                        mask= is_masked, \
+	                        test= learning_or_test, \
+	                        user_answer= user_answer)
+	    
+	    model_package.spacing_model.register_response(response) 
+	    
+	    clock.sleep(var.feedback_duration)
+	    
+	    # Clear the screen between trials
+	    ui.clear_screen()
+	    
+	    clock.sleep(var.inter_trial_interval)
+	    
+	    # Check if time is up
+	    if clock.time() - var.session_start_time >= var.session_duration:
+	    	var.time_up = True
+	    	
+	    # Increment trial number
+	    var.trial_num += 1
+	
+	def run_learning_item(model_package, is_masked):
+	    trial_start_time = clock.time()
+	    learning_fact, is_new = \
+		model_package.spacing_model.get_next_fact(current_time = \
+								trial_start_time)
+	    run_item(learning_fact, model_package, trial_start_time, \
+	             is_masked, 'learning', is_new)
+	
+	
+	def run_test_item(model_package, test_fact, is_masked):
+	    trial_start_time = clock.time()
+	    run_item(test_fact, model_package, trial_start_time, \
+	             is_masked, 'test', False)
+	    
+	def run_masked_learning(mask_package, other_package):
+	    end_time = clock.time() + var.session_duration
+	    
+	    while clock.time() < end_time:
+	        run_learning_item(mask_package, True)
+	        run_learning_item(other_package, True)
+	        
+	def run_unmasked_learning(other_package):
+	    end_time = clock.time() + var.session_duration
+	    
+	    while clock.time() < end_time:
+	        run_learning_item(other_package, False)
+	        
+	def run_masked_test(mask_package, other_package):
+	    n_facts = min(len(mask_package.facts), len(other_package.facts))
+	    
+	    mask_facts = random.sample(mask_package.facts, n_facts)
+	    other_facts = random.sample(other_package.facts, n_facts)
+	    
+	    for i in range(n_facts):
+	        run_test_item(mask_package, mask_facts[i], True)
+	        run_test_item(other_package, other_facts[i], True)
+	        
+	def run_unmasked_test(other_package):
+	    n_facts = len(other_package.facts)
+	    
+	    other_facts = random.sample(other_package.facts, n_facts)
+	    
+	    for i in range(n_facts):
+	        run_test_item(other_package, other_facts[i], False)
+	__end__
+	set _prepare ""
 
 define inline_script Run_Trial_Item
 	set description "Executes Python code"
@@ -689,11 +808,6 @@ define loop TestingTrial
 	setcycle 0 empty_column ""
 	run Testingblock_mask
 
-define sketchpad Testing_instructions
-	set duration keypress
-	set description "Displays stimuli"
-	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0 y=0 z_index=0
-
 define sketchpad Testing_instructions_1
 	set duration keypress
 	set description "Displays stimuli"
@@ -709,7 +823,7 @@ define sketchpad Testing_instructions_2_1
 	set description "Displays stimuli"
 	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0 y=0 z_index=0
 
-define sketchpad Testing_instructions_2_2
+define sketchpad Testing_instructions_old
 	set duration keypress
 	set description "Displays stimuli"
 	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0 y=0 z_index=0
@@ -1568,11 +1682,6 @@ define inline_script Text_Style
 	__end__
 	set _prepare ""
 
-define sketchpad Training_instructions
-	set duration keypress
-	set description "Displays stimuli"
-	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=-96 y=-32 z_index=0
-
 define sketchpad Training_instructions_1
 	set duration keypress
 	set description "Displays stimuli"
@@ -1588,10 +1697,10 @@ define sketchpad Training_instructions_2_1
 	set description "Displays stimuli"
 	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=-96 y=-32 z_index=0
 
-define sketchpad Training_instructions_2_2
+define sketchpad Training_instructions_old
 	set duration keypress
 	set description "Displays stimuli"
-	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=-96 y=-32 z_index=0
+	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=0.0 y=0.0 z_index=0
 
 define sequence UI
 	set flush_keyboard yes
@@ -1599,7 +1708,7 @@ define sequence UI
 	run ClassDefinitions always
 	run UI_Setup always
 	run Cue_Parse_Function_Relative_Pitch always
-	run Run_Trial_Item always
+	run Run_Item always
 
 define inline_script UI_Class
 	set description "Executes Python code"
@@ -1696,6 +1805,16 @@ define inline_script UI_Setup
 	__end__
 	set _prepare ""
 
+define sketchpad change_group_to_interval_no_mask
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now changing to intervals no masking" x=0 y=0 z_index=0
+
+define sketchpad change_group_to_pitch_no_mask
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Going into Single note no masking" x=0 y=0 z_index=0
+
 define sketchpad changegroup
 	set duration keypress
 	set description "Displays stimuli"
@@ -1704,20 +1823,17 @@ define sketchpad changegroup
 define sequence experiment
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
-	run Class_Struggle always
-	run UI always
 	run slimstampen_setup always
+	run UI always
 	run Load_Facts always
+	run Create_Model_Packages always
 	run instructions always
 	run learning_session_setup always
-	run Relative_pitch_loop_mask_1 always
-	run pitch_w_mask always
-	run changegroup always
-	run Single_notes_no_masking always
-	run intervals always
-	run Relative_pitch_loop_mask always
-	run Change_intervals_conditions always
-	run Relative_pitch_loop_no_mask_ always
+	run pitch_w_mask_sequence always
+	run pitch_wo_mask_sequence_1 always
+	run switching_to_intervals always
+	run interval_w_mask_sequence_1 always
+	run interval_wo_mask_sequence_1 always
 	run save_data always
 
 define sketchpad instructions
@@ -1741,6 +1857,24 @@ define loop instruments_while_items_left
 	setcycle 2 instrument harp
 	run ""
 
+define inline_script interval_w_mask_learning_script
+	set description "Executes Python code"
+	set _run "run_masked_learning(instrument_package, interval_package)"
+	set _prepare ""
+
+define inline_script interval_w_mask_learning_script_1
+	set description "Executes Python code"
+	set _run "run_unmasked_learning(interval_package)"
+	set _prepare ""
+
+define inline_script interval_w_mask_script
+	set description "Executes Python code"
+	___run__
+	run_learning_item(instrument_package, True)
+	run_learning_item(interval_package, True)
+	__end__
+	set _prepare ""
+
 define sequence interval_w_mask_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
@@ -1752,10 +1886,20 @@ define sequence interval_w_mask_sequence
 define sequence interval_w_mask_sequence_1
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
-	run Training_instructions_2_2 always
-	run while_there_is_time_left_2_2 always
-	run Testing_instructions_2_2 always
-	run Testingblock_2_2 always
+	run training_instructions always
+	run interval_w_mask_learning_script always
+	run testing_instructions always
+	run interval_w_mask_test_script always
+
+define inline_script interval_w_mask_test_script
+	set description "Executes Python code"
+	set _run "run_masked_test(instrument_package, interval_package)"
+	set _prepare ""
+
+define inline_script interval_w_mask_test_script_1
+	set description "Executes Python code"
+	set _run "run_unmasked_test(interval_package)"
+	set _prepare ""
 
 define sequence interval_wo_mask_sequence
 	set flush_keyboard yes
@@ -1765,7 +1909,21 @@ define sequence interval_wo_mask_sequence
 	run Testing_instructions_2_1 always
 	run Testingblock_2_1 always
 
+define sequence interval_wo_mask_sequence_1
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run change_group_to_interval_no_mask always
+	run training_instructions always
+	run interval_w_mask_learning_script_1 always
+	run testing_instructions always
+	run interval_w_mask_test_script_1 always
+
 define sketchpad intervals
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now starting Interval conditions" x=0 y=0 z_index=0
+
+define sketchpad intervals_1
 	set duration keypress
 	set description "Displays stimuli"
 	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now starting Interval conditions" x=0 y=0 z_index=0
@@ -2401,6 +2559,74 @@ define sketchpad new_sketchpad
 	set duration keypress
 	set description "Displays stimuli"
 
+define inline_script new_test_pitch_mask
+	set description "Executes Python code"
+	___run__
+	def combine_facts_lists(pitch_or_interval_list: list,\
+	                        instrument_list: list,\
+	                        pitch_or_interval: str):
+	    fact_list_to_test = []
+	
+	    # extra randomizer
+	    random.shuffle(pitch_or_interval_list)
+	    random.shuffle(instrument_list)
+	    
+	    n_facts = min(len(pitch_or_interval_list), len(instrument_list))
+	
+	    for i in range(n_facts):
+	        fact_list_to_test.append((instrument_list[i], "instrument"))
+	        fact_list_to_test.append((pitch_or_interval_list[i],\
+	                                  pitch_or_interval))
+	        
+	def present_fact(fact, model_package, has_mask, is_test):
+	    cue, answer = test_fact
+	    
+	    if cue_parse_function:
+	        cue = cue_parse_function(cue)
+	    
+	    trial_start_time = clock.time()
+	    
+	    user_response_dict = ui.present_item(cue, answer, False)
+	    results = user_response_dict
+	    
+	    response = Response(test_fact, trial_start_time, rt, correct, condition, "mask", "test", keyboard_response)
+	                        
+	        
+	    rt = results['time'] - trial_start_time \
+		if not results['response_has_been_erased'] \
+			else float('inf')
+	    		
+	    correct = results['correct']
+	    user_answer = results['response']
+	    
+	    response = Response(fact= next_fact, \
+	        start_time= trial_start_time, rt= rt, correct= correct, \
+	        condition= condition, mask= mask, test= test,\
+	        user_answer= user_answer)
+	    
+	    spacing_model.register_response(response) 
+	    
+	    clock.sleep(var.feedback_duration)
+	    
+	    # Clear the screen between trials
+	    ui.clear_screen()
+	    
+	    clock.sleep(var.inter_trial_interval)
+	    
+	    # Check if time is up
+	    if clock.time() - var.session_start_time >= var.session_duration:
+	    	var.time_up = True
+	    	
+	    # Increment trial number
+	    var.trial_num += 1
+	    
+	for fact in fact_list_to_test:
+	    present_fact(fact)
+	    
+	    
+	__end__
+	set _prepare ""
+
 define inline_script new_trial
 	set description "Executes Python code"
 	___run__
@@ -2447,15 +2673,44 @@ define loop pitch_w_mask
 	set break_if_on_first yes
 	set break_if never
 	setcycle 0 empty_column ""
-	run pitch_w_mask_sequence
+	run pitch_w_mask_sequence_2
+
+define inline_script pitch_w_mask_learning_script
+	set description "Executes Python code"
+	set _run "run_masked_learning(instrument_package, pitch_package)"
+	set _prepare ""
+
+define inline_script pitch_w_mask_learning_script_1
+	set description "Executes Python code"
+	set _run "run_unmasked_learning(pitch_package)"
+	set _prepare ""
 
 define sequence pitch_w_mask_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
-	run Training_instructions always
+	run training_instructions always
+	run pitch_w_mask_learning_script always
+	run testing_instructions always
+	run pitch_w_mask_test_script always
+
+define sequence pitch_w_mask_sequence_2
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Training_instructions_old always
 	run while_there_is_time_left always
-	run Testing_instructions always
+	run Testing_instructions_old always
+	run new_test_pitch_mask always
 	run Testingblock_mask always
+
+define inline_script pitch_w_mask_test_script
+	set description "Executes Python code"
+	set _run "run_masked_test(instrument_package, pitch_package)"
+	set _prepare ""
+
+define inline_script pitch_w_mask_test_script_1
+	set description "Executes Python code"
+	set _run "run_unmasked_test(pitch_package)"
+	set _prepare ""
 
 define loop pitch_while_there_are_items_left
 	set source_file ""
@@ -2479,6 +2734,15 @@ define sequence pitch_wo_mask_sequence
 	run while_there_is_time_left_1 always
 	run Testing_instructions_1 always
 	run Testingblock_1 always
+
+define sequence pitch_wo_mask_sequence_1
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run change_group_to_pitch_no_mask always
+	run training_instructions always
+	run pitch_w_mask_learning_script_1 always
+	run testing_instructions always
+	run pitch_w_mask_test_script_1 always
 
 define inline_script present_trial
 	set description "Executes Python code"
@@ -3246,9 +3510,9 @@ define inline_script save_data
 	set description "Executes Python code"
 	___run__
 	# Write the SlimStampen data to the OpenSesame log file
-	dat = m.export_data(header_true=True)
-	dat2 = m_instruments.export_data(header_true = False)
-	dat3 = m_relative.export_data(header_true = False)
+	dat = pitch_package.spacing_model.export_data(header_true=True)
+	dat2 = instrument_package.spacing_model.export_data(header_true = False)
+	dat3 = interval_package.spacing_model.export_data(header_true = False)
 	log.write(dat)
 	log.write(dat2)
 	log.write(dat3)
@@ -3534,6 +3798,21 @@ define inline_script slimstampen_setup
 	        return(dat.to_csv(header=header_true))
 	__end__
 
+define sketchpad switching_to_intervals
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Now starting Interval conditions" x=0 y=0 z_index=0
+
+define sketchpad testing_instructions
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color=white font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Testing phase begins now<br />Press any key to continue<br /><br />" x=0 y=0 z_index=0
+
+define sketchpad training_instructions
+	set duration keypress
+	set description "Displays stimuli"
+	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=0.0 y=0.0 z_index=0
+
 define sequence trial_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
@@ -3628,5 +3907,5 @@ define loop while_there_is_time_left_2_2
 	set break_if_on_first yes
 	set break_if "[time_up] = yes"
 	setcycle 0 ignore_this_variable 1
-	run trial_sequence_2_2
+	run interval_w_mask_script
 

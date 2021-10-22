@@ -1,0 +1,44 @@
+trial,start_time,rt,correct,condition,mask,test,user_answer,fact_id,question,answer,alpha
+1,10130.69220000034,644.1169999998237,True,pitch,True,learning,e,2,e3,e,0.3
+2,16642.728000000716,1012.0021000002453,True,pitch,True,test,g,3,g3,g,0.3
+3,27206.842600000527,1656.8551000000298,False,pitch,True,test,g,1,c3,c,0.3
+4,39020.01210000162,1954.8007999983383,True,pitch,True,test,b,4,b4,b,0.3
+5,46517.12110000153,-46517.12110000153,False,pitch,True,test,,5,c4,c,0.3
+6,49333.158500001446,4785.573499999373,False,pitch,True,test,g,2,e3,e,0.3
+7,57607.09270000007,1159.6974000003684,True,pitch,False,learning,g,3,g3,g,0.3
+8,60345.79180000037,1052.9507999999623,True,pitch,False,learning,c,1,c3,c,0.3
+9,185982.96540000045,1838.5348000010708,False,pitch,False,test,d,5,c4,c,0.3
+10,189251.76400000055,-189251.76400000055,False,pitch,False,test,,1,c3,c,0.324609375
+11,190339.33890000117,803.3873999993375,False,pitch,False,test,c,3,g3,g,0.324609375
+12,192784.19810000015,2558.7924000010244,False,pitch,False,test,d,4,b4,b,0.3
+13,196683.07850000018,811.6626000010292,False,pitch,False,test,d,2,e3,e,0.332421875
+
+1,6926.8591000000015,1992.1759000008024,True,instrument,True,learning,clarinet,2,clarinet,clarinet,0.3
+2,12918.999100000292,2424.945300001127,True,instrument,True,test,harp,8,harp,harp,0.3
+3,18858.813500000906,inf,False,instrument,True,test,tuba,6,frenchhorn,french horn,0.3
+4,30088.855600000898,7734.203699999853,False,instrument,True,test,harmonica,1,accordeon,accordeon,0.3
+5,42218.07810000064,3076.690400001098,True,instrument,True,test,clarinet,2,clarinet,clarinet,0.3
+6,47617.47900000046,23.997899999812944,False,instrument,True,test,c,5,flute,flute,0.3
+7,209503.1768000008,1671.818999999232,True,instrument,True,learning,harp,8,harp,harp,0.3
+8,217479.1292000009,4567.643000000331,True,instrument,True,test,french horn,6,frenchhorn,french horn,0.3
+9,228456.2284000003,2966.630200000538,False,instrument,True,test,df,3,drums,drums,0.3
+10,234202.5061000004,348.2137000009825,False,instrument,True,test,de,8,harp,harp,0.300390625
+11,237369.11820000023,223.571800001082,False,instrument,True,test,ee,5,flute,flute,0.3
+12,240117.54340000154,225.2382999995316,False,instrument,True,test,e,7,harmonica,harmonica,0.3
+
+1,212443.55540000106,2675.09599999903,True,interval,True,learning,major third,1,4,major third,0.3
+2,223322.92240000062,3795.8567999994266,False,interval,True,test,c,0,0,perfect unison,0.3
+3,232637.62500000122,425.27539999899454,False,interval,True,test,df,2,7,perfect fifth,0.3
+4,236135.47540000034,55.44030000056955,False,interval,True,test,e,4,12,perfect octave,0.3
+5,238756.97310000032,105.94510000009905,False,interval,True,test,e,1,4,major third,0.3
+6,241517.02390000172,98.08639999938896,False,interval,True,test,e,3,11,major seventh,0.3
+7,243207.10450000115,727.6898000000219,False,interval,False,learning,e,0,0,perfect unison,0.3
+8,245210.94450000057,46.8235000007553,False,interval,False,learning,e,2,7,perfect fifth,0.3
+9,246565.31950000135,28.5038999991084,False,interval,False,learning,e,4,12,perfect octave,0.3
+10,247764.34560000052,39.257500000530854,False,interval,False,learning,e,3,11,major seventh,0.3
+11,249089.30840000176,110.08209999999963,False,interval,False,test,e,3,11,major seventh,0.349609375
+12,250397.22560000155,67.3638999996765,False,interval,False,test,ee,1,4,major third,0.349609375
+13,251632.37700000172,20.828699998673983,False,interval,False,test,e,4,12,perfect octave,0.349609375
+14,252812.68280000042,22.197600001149112,False,interval,False,test,e,0,0,perfect unison,0.349609375
+15,254014.8936000005,168.17439999975613,False,interval,False,test,ee,2,7,perfect fifth,0.349609375
+
