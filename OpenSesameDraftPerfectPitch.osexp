@@ -59,7 +59,8 @@ define inline_script Audio
 	        elif type(source) == str:
 	            self.play_audio_from_pool(source)
 	        elif type(source) == tuple:
-	            for s in source:
+	            for i, s in enumerate(source):
+	                if i: clock.sleep(1000)
 	                self.play_audio(s)
 	                
 	    def stop_audio(self):
@@ -1706,9 +1707,8 @@ define sequence UI
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 	run ClassDefinitions always
+	run UsefulFunctions always
 	run UI_Setup always
-	run Cue_Parse_Function_Relative_Pitch always
-	run Run_Item always
 
 define inline_script UI_Class
 	set description "Executes Python code"
@@ -1804,6 +1804,12 @@ define inline_script UI_Setup
 	ui = UI(keyboard = ki)
 	__end__
 	set _prepare ""
+
+define sequence UsefulFunctions
+	set flush_keyboard yes
+	set description "Runs a number of items in sequence"
+	run Cue_Parse_Function_Relative_Pitch always
+	run Run_Item always
 
 define sketchpad change_group_to_interval_no_mask
 	set duration keypress
