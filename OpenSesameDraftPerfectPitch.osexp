@@ -229,6 +229,7 @@ define inline_script Keyboard_Input
 	        self.t_last_empty = 0
 	        self.t_return = 0
 	        self.has_been_erased_completely = False
+	        self.keyboard.flush()
 	        
 	    def set_interface(self, interface):
 	        self.interface = interface
