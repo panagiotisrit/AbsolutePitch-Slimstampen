@@ -596,10 +596,10 @@ define sequence experiment
 	run instructions always
 	run learning_session_setup always
 	run pitch_w_mask_sequence always
-	run pitch_wo_mask_sequence_1 always
+	run pitch_wo_mask_sequence always
 	run switching_to_intervals always
-	run interval_w_mask_sequence_1 always
-	run interval_wo_mask_sequence_1 always
+	run interval_w_mask_sequence always
+	run interval_wo_mask_sequence always
 	run save_data always
 
 define sketchpad instructions
@@ -613,12 +613,7 @@ define inline_script interval_w_mask_learning_script
 	set _run "run_masked_learning(instrument_package, interval_package)"
 	set _prepare ""
 
-define inline_script interval_w_mask_learning_script_1
-	set description "Executes Python code"
-	set _run "run_unmasked_learning(interval_package)"
-	set _prepare ""
-
-define sequence interval_w_mask_sequence_1
+define sequence interval_w_mask_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 	run training_instructions always
@@ -631,19 +626,24 @@ define inline_script interval_w_mask_test_script
 	set _run "run_masked_test(instrument_package, interval_package)"
 	set _prepare ""
 
-define inline_script interval_w_mask_test_script_1
+define inline_script interval_wo_mask_learning_script
 	set description "Executes Python code"
-	set _run "run_unmasked_test(interval_package)"
+	set _run "run_unmasked_learning(interval_package)"
 	set _prepare ""
 
-define sequence interval_wo_mask_sequence_1
+define sequence interval_wo_mask_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 	run change_group_to_interval_no_mask always
 	run training_instructions always
-	run interval_w_mask_learning_script_1 always
+	run interval_wo_mask_learning_script always
 	run testing_instructions always
-	run interval_w_mask_test_script_1 always
+	run interval_wo_mask_test_script always
+
+define inline_script interval_wo_mask_test_script
+	set description "Executes Python code"
+	set _run "run_unmasked_test(interval_package)"
+	set _prepare ""
 
 define inline_script learning_session_setup
 	set description "Executes Python code"
@@ -672,11 +672,6 @@ define inline_script pitch_w_mask_learning_script
 	set _run "run_masked_learning(instrument_package, pitch_package)"
 	set _prepare ""
 
-define inline_script pitch_w_mask_learning_script_1
-	set description "Executes Python code"
-	set _run "run_unmasked_learning(pitch_package)"
-	set _prepare ""
-
 define sequence pitch_w_mask_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
@@ -690,19 +685,24 @@ define inline_script pitch_w_mask_test_script
 	set _run "run_masked_test(instrument_package, pitch_package)"
 	set _prepare ""
 
-define inline_script pitch_w_mask_test_script_1
+define inline_script pitch_wo_mask_learning_script
 	set description "Executes Python code"
-	set _run "run_unmasked_test(pitch_package)"
+	set _run "run_unmasked_learning(pitch_package)"
 	set _prepare ""
 
-define sequence pitch_wo_mask_sequence_1
+define sequence pitch_wo_mask_sequence
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
 	run change_group_to_pitch_no_mask always
 	run training_instructions always
-	run pitch_w_mask_learning_script_1 always
+	run pitch_wo_mask_learning_script always
 	run testing_instructions always
-	run pitch_w_mask_test_script_1 always
+	run pitch_wo_mask_test_script always
+
+define inline_script pitch_wo_mask_test_script
+	set description "Executes Python code"
+	set _run "run_unmasked_test(pitch_package)"
+	set _prepare ""
 
 define inline_script save_data
 	set description "Executes Python code"
