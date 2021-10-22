@@ -60,7 +60,7 @@ define inline_script Audio
 	            self.play_audio_from_pool(source)
 	        elif type(source) == tuple:
 	            for i, s in enumerate(source):
-	                if i: clock.sleep(1000)
+	                if i: self.audio.wait()
 	                self.play_audio(s)
 	                
 	    def stop_audio(self):
