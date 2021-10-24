@@ -1,7 +1,7 @@
 ---
 API: 2.1
 OpenSesame: 3.3.10
-Platform: nt
+Platform: posix
 ---
 set width 1024
 set uniform_coordinates yes
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "C:\\Users\\Gebruiker\\Documents\\University\\User_Models\\Other\\AbsolutePitch-Slimstampen"
+set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -45,8 +45,12 @@ define inline_script Audio
 	    
 	    def play_audio_from_pool(self, file_name: str):
 	        src = pool[file_name + '.wav']
-	        self.audio = Sampler(src)
-	        self.audio.play()
+	        if len(file_name) < 4: # we are playing a note
+	            self.audio = Sampler(src)
+	            self.audio.play()
+	        else: # we are playing an instrument
+	            self.audio = Sampler(src, volume=0.2)
+	            self.audio.play()
 	        
 	    def play_audio_from_frequency(self, frequency: int):
 	        self.audio = Synth(freq=frequency, length=1000, attack=0, decay=5)
@@ -60,7 +64,7 @@ define inline_script Audio
 	            self.play_audio_from_pool(source)
 	        elif type(source) == tuple:
 	            for i, s in enumerate(source):
-	                if i: self.audio.wait()
+	                if i: clock.sleep(1000)
 	                self.play_audio(s)
 	                
 	    def stop_audio(self):
@@ -121,8 +125,8 @@ define inline_script Cue_Parse_Function_Relative_Pitch
 	    rel_note = interval_c0_to_note(rel_interval_c0)
 	    return rel_note
 	
-	range_reference_pitch = (note_to_interval_c0('c3'), \
-	    note_to_interval_c0('c5'))
+	range_reference_pitch = (note_to_interval_c0('a2'), \
+	    note_to_interval_c0('c4'))
 	
 	import random
 	
@@ -1010,5 +1014,5 @@ define sketchpad testing_instructions
 define sketchpad training_instructions
 	set duration keypress
 	set description "Displays stimuli"
-	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=0.0 y=0.0 z_index=0
+	draw textline center=1 color="#fec52d" font_bold=no font_family=mono font_italic=no font_size=18 html=yes show_if=always text="Starting training block... <br />press any key to continue, when you're ready" x=0 y=0 z_index=0
 
