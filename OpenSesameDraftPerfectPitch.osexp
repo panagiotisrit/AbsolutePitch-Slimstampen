@@ -126,7 +126,7 @@ define inline_script Cue_Parse_Function_Relative_Pitch
 	    return rel_note
 	
 	range_reference_pitch = (note_to_interval_c0('a2'), \
-	    note_to_interval_c0('c4'))
+	    note_to_interval_c0('a4'))
 	
 	import random
 	
