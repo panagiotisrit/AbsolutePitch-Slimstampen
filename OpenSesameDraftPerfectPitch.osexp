@@ -372,7 +372,8 @@ define inline_script Run_Item
 	set description "Executes Python code"
 	___run__
 	def run_item(fact, model_package, trial_start_time, \
-	             is_masked, learning_or_test, show_answer):
+	             is_masked, learning_or_test, show_answer, \
+	             present_feedback):
 	    cue = fact.question
 	    
 	    if model_package.cue_parse_function:
@@ -380,7 +381,7 @@ define inline_script Run_Item
 	
 	    answer = fact.answer
 	    
-	    results = ui.present_item(cue, answer, show_answer)
+	    results = ui.present_item(cue, answer, show_answer, present_feedback)
 	    
 	    rt = results['time'] - trial_start_time \
 	    	if not results['response_has_been_erased'] \
@@ -416,13 +417,13 @@ define inline_script Run_Item
 		model_package.spacing_model.get_next_fact(current_time = \
 								trial_start_time)
 	    run_item(learning_fact, model_package, trial_start_time, \
-	             is_masked, 'learning', is_new)
+	             is_masked, 'learning', is_new, True)
 	
 	
 	def run_test_item(model_package, test_fact, is_masked):
 	    trial_start_time = clock.time()
 	    run_item(test_fact, model_package, trial_start_time, \
-	             is_masked, 'test', False)
+	             is_masked, 'test', False, False)
 	    
 	def run_masked_learning(mask_package, other_package):
 	    end_time = clock.time() + var.session_duration
@@ -546,7 +547,8 @@ define inline_script UI_Class
 	        self.state.cue = cue
 	        self.state.answer = answer
 	        
-	    def present_item(self, cue, answer, show_answer: bool = False):
+	    def present_item(self, cue, answer, show_answer: bool = False, \
+	                     present_feedback: bool = True):
 	        self.set_cue_answer(cue, answer)
 	        self.clear_screen()
 	        if show_answer: self.show_answer()
@@ -554,7 +556,7 @@ define inline_script UI_Class
 	        self.take_input()
 	        self.audio.stop_audio()
 	        self.check_response()
-	        self.present_feedback()
+	        if present_feedback: self.present_feedback()
 	        return self.state.as_dict()
 	        
 	__end__
