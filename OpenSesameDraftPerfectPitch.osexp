@@ -86,8 +86,9 @@ define sequence ClassDefinitions
 define inline_script Create_Model_Packages
 	set description "Executes Python code"
 	___run__
-	pitch_package = Model_Package(m, facts, 'pitch')
-	interval_package = Model_Package(m_relative, facts_relative, 'interval', rp_parse_cue)
+	pitch_package = Model_Package(m, facts, 'pitch', 2)
+	interval_package = Model_Package(m_relative, facts_relative, 'interval', \
+	    2, rp_parse_cue)
 	instrument_package = Model_Package(m_instruments, facts_instruments, 'instrument')
 	__end__
 	set _prepare ""
@@ -360,10 +361,12 @@ define inline_script Model_Package
 	                 spacing_model: SpacingModel, \
 	                 facts: list, \
 	                 condition_name: str, \
+	                 n_test_repeats: int = 1, \
 	                 cue_parse_function = None):
 	        self.spacing_model = spacing_model
 	        self.facts = facts
 	        self.condition_name = condition_name
+	        self.n_test_repeats = n_test_repeats
 	        self.cue_parse_function = cue_parse_function
 	__end__
 	set _prepare ""
@@ -401,7 +404,7 @@ define inline_script Run_Item
 	    
 	    model_package.spacing_model.register_response(response) 
 	    
-	    clock.sleep(var.feedback_duration)
+	    if present_feedback: clock.sleep(var.feedback_duration)
 	    
 	    # Clear the screen between trials
 	    ui.clear_screen()
@@ -439,9 +442,7 @@ define inline_script Run_Item
 	        run_learning_item(other_package, False)
 	        
 	def run_masked_test(mask_package, other_package):
-	    n_repeats_other = 3
-	    
-	    n_facts = n_repeats_other * len(other_package.facts)
+	    n_facts = other_package.n_test_repeats * len(other_package.facts)
 	    
 	    n_full_repeats_mask = n_facts // len(mask_package.facts)
 	    n_mask_items_repeated_one_more_time = n_facts % \
@@ -452,7 +453,7 @@ define inline_script Run_Item
 	            n_mask_items_repeated_one_more_time)
 	    mask_facts = random.sample(mask_facts, len(mask_facts))
 	    
-	    other_facts = random.sample(n_repeats_other * other_package.facts, \
+	    other_facts = random.sample(other_package.n_test_repeats * other_package.facts, \
 	        n_facts)
 	    
 	    for i in range(n_facts):
@@ -460,9 +461,7 @@ define inline_script Run_Item
 	        run_test_item(other_package, other_facts[i], True)
 	        
 	def run_unmasked_test(other_package):
-	    n_repeats_other = 2
-	    
-	    other_facts = n_repeats_other * other_package.facts
+	    other_facts = other_package.n_test_repeats * other_package.facts
 	    
 	    n_facts = len(other_facts)
 	    
