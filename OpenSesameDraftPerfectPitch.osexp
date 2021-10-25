@@ -439,19 +439,34 @@ define inline_script Run_Item
 	        run_learning_item(other_package, False)
 	        
 	def run_masked_test(mask_package, other_package):
-	    n_facts = min(len(mask_package.facts), len(other_package.facts))
+	    n_repeats_other = 3
 	    
-	    mask_facts = random.sample(mask_package.facts, n_facts)
-	    other_facts = random.sample(other_package.facts, n_facts)
+	    n_facts = n_repeats_other * len(other_package.facts)
+	    
+	    n_full_repeats_mask = n_facts // len(mask_package.facts)
+	    n_mask_items_repeated_one_more_time = n_facts % \
+	        len(mask_package.facts)
+	    
+	    mask_facts = n_full_repeats_mask * mask_package.facts + \
+	        random.sample(mask_package.facts, \
+	            n_mask_items_repeated_one_more_time)
+	    mask_facts = random.sample(mask_facts, len(mask_facts))
+	    
+	    other_facts = random.sample(n_repeats_other * other_package.facts, \
+	        n_facts)
 	    
 	    for i in range(n_facts):
 	        run_test_item(mask_package, mask_facts[i], True)
 	        run_test_item(other_package, other_facts[i], True)
 	        
 	def run_unmasked_test(other_package):
-	    n_facts = len(other_package.facts)
+	    n_repeats_other = 2
 	    
-	    other_facts = random.sample(other_package.facts, n_facts)
+	    other_facts = n_repeats_other * other_package.facts
+	    
+	    n_facts = len(other_facts)
+	    
+	    other_facts = random.sample(other_facts, n_facts)
 	    
 	    for i in range(n_facts):
 	        run_test_item(other_package, other_facts[i], False)
