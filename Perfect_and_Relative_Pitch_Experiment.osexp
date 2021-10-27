@@ -439,7 +439,7 @@ define inline_script Run_Item
 	
 	    answer = fact.answer
 	    
-	    results = ui.present_item(cue, answer, show_answer, present_feedback)
+	    results = ui.present_item(cue, answer, model_package.condition_name, show_answer, present_feedback)
 	    
 	    rt = results['time'] - trial_start_time \
 	    	if not results['response_has_been_erased'] \
@@ -592,10 +592,36 @@ define inline_script UI_Class
 	        
 	    def repeat_cue(self):
 	        self.present_cue()
+	        
+	    def find_edit_distance(self, s1, s2): # from "https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python"
+	        if len(s1) < len(s2):
+	            return self.find_edit_distance(s2, s1)
+	        if len(s2) == 0:
+	            return len(s1)
+	        previous_row = range(len(s2) + 1)
+	        for i, c1 in enumerate(s1):
+	            current_row = [i + 1]
+	            for j, c2 in enumerate(s2):
+	                insertions = previous_row[j + 1] + 1
+	                deletions = current_row[j] + 1       
+	                substitutions = previous_row[j] + (c1 != c2)
+	                current_row.append(min(insertions, deletions, substitutions))
+	            previous_row = current_row
+	        
+	        return previous_row[-1]
 	    
-	    def check_response(self):
-	        self.state.correct = \
-	            (self.state.response == self.state.answer)
+	    def check_response(self, condition):
+	        if self.state.response == self.state.answer:
+	            self.state.correct = True
+	        else:
+	            if condition == 'pitch_masked' or condition == 'pitch_unmasked': # here you cannot make a mistake as the edit distance between e and b is 1:
+	                self.state.correct = False
+	            else:
+	                if self.find_edit_distance(self.state.response, self.state.answer) < 3:    # only check edit distance if not immediately clear.
+	                    self.state.correct = True
+	                else:
+	                    self.state.correct = False
+	            
 	        
 	    def take_input(self):
 	        self.state.response, self.state.time, \
@@ -617,7 +643,7 @@ define inline_script UI_Class
 	        self.state.cue = cue
 	        self.state.answer = answer
 	        
-	    def present_item(self, cue, answer, show_answer: bool = False, \
+	    def present_item(self, cue, answer, condition, show_answer: bool = False, \
 	                     present_feedback: bool = True):
 	        self.set_cue_answer(cue, answer)
 	        self.clear_screen()
@@ -625,7 +651,7 @@ define inline_script UI_Class
 	        self.present_cue()
 	        self.take_input()
 	        self.audio.stop_audio()
-	        self.check_response()
+	        self.check_response(condition)
 	        if present_feedback: self.present_feedback()
 	        return self.state.as_dict()
 	        
