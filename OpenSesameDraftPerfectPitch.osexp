@@ -86,19 +86,33 @@ define sequence ClassDefinitions
 define inline_script Create_Model_Packages
 	set description "Executes Python code"
 	___run__
-	pitch_package = Model_Package(m, facts_pitch_masked, 'pitch', 2, pp_parse_cue)
-	interval_package = Model_Package(m_relative, facts_interval_masked, 'interval', \
-	    2, rp_parse_cue)
-	instrument_package = Model_Package(m_instruments, facts_instruments, 'instrument')
+	pitch_masked_package = Model_Package(m_pitch_masked,\
+	    facts_pitch_masked, 'pitch_masked', 2, pp_parse_cue)
+	pitch_unmasked_package = Model_Package(m_pitch_unmasked,\
+	    facts_pitch_unmasked, 'pitch_unmasked', 2, pp_parse_cue)
+	interval_masked_package = Model_Package(m_interval_masked,\
+	    facts_interval_masked, 'interval_masked', 2, rp_parse_cue)
+	interval_unmasked_package = Model_Package(m_interval_unmasked,\
+	    facts_interval_unmasked, 'interval_unmasked', 2, rp_parse_cue)
+	instrument_package = Model_Package(m_instruments,\
+	    facts_instruments, 'instrument')
+	
+	print('')
+	print('facts per condition:')
+	print('pitch_masked:', pitch_masked_package.facts, '\n')
+	print('pitch_unmasked:', pitch_unmasked_package.facts, '\n')
+	print('interval_masked:', interval_masked_package.facts, '\n')
+	print('interval_unmasked:', interval_unmasked_package.facts, '\n')
+	print('instrument:', instrument_package.facts, '\n')
 	__end__
 	set _prepare ""
 
-define inline_script Cue_Parse_Function_Relative_Pitch
+define inline_script Cue_Parse_Functions
 	set description "Executes Python code"
 	___run__
 	import random
 	
-	octave_range_perfect_pitch = (3, 6)
+	octave_range_perfect_pitch = (3, 4)
 	
 	def pp_parse_cue(cue):
 	    octave = random.randint(*octave_range_perfect_pitch)
@@ -136,7 +150,7 @@ define inline_script Cue_Parse_Function_Relative_Pitch
 	    return rel_note
 	
 	range_reference_pitch = (note_to_interval_c0('a2'), \
-	    note_to_interval_c0('a4'))
+	    note_to_interval_c0('g-4'))
 	
 	def rp_parse_cue(cue):
 	    reference_pitch_i = random.randint(*range_reference_pitch)
@@ -334,11 +348,10 @@ define inline_script Load_Facts
 		
 		shuffled_original_set = random.sample(original_set, len(original_set))
 		
-		subset_0 = original_set[:n_items]
-		subset_1 = original_set[n_items:2*n_items]
+		subset_0 = shuffled_original_set[:n_items]
+		subset_1 = shuffled_original_set[n_items:2*n_items]
 		
 		return subset_0, subset_1
-		
 		
 	facts_pitch = [Fact(1,"c", "c"),
 			 Fact(2, "c-", "c sharp"),
@@ -362,17 +375,21 @@ define inline_script Load_Facts
 			facts_interval.append(Fact(i, int(cells[1]),\
 				str(cells[2]).lower()))
 	
-	facts_pitch_masked, fact_pitch_unmasked = get_two_disjoint_sets(\
+	facts_pitch_masked, facts_pitch_unmasked = get_two_disjoint_sets(\
 		facts_pitch, len(facts_pitch) // 2)
-	facts_interval_masked, fact_pitch_unmasked = get_two_disjoint_sets(\
+	facts_interval_masked, facts_interval_unmasked = get_two_disjoint_sets(\
 		facts_interval, len(facts_interval) // 2)
 	
 	for fact in facts_pitch_masked:
-		m.add_fact(fact)
+		m_pitch_masked.add_fact(fact)
+	for fact in facts_pitch_unmasked:
+		m_pitch_unmasked.add_fact(fact)
+	for fact in facts_interval_masked:
+		m_interval_masked.add_fact(fact)
+	for fact in facts_interval_unmasked:
+		m_interval_unmasked.add_fact(fact)
 	for fact in facts_instruments:
 		m_instruments.add_fact(fact)
-	for fact in facts_interval_masked:
-		m_relative.add_fact(fact)
 	__end__
 	set _prepare ""
 
@@ -423,6 +440,7 @@ define inline_script Run_Item
 	                        condition= model_package.condition_name, \
 	                        mask= is_masked, \
 	                        test= learning_or_test, \
+	                        presented_cue= cue, \
 	                        user_answer= user_answer)
 	    
 	    model_package.spacing_model.register_response(response) 
@@ -613,7 +631,7 @@ define inline_script UI_Setup
 define sequence UsefulFunctions
 	set flush_keyboard yes
 	set description "Runs a number of items in sequence"
-	run Cue_Parse_Function_Relative_Pitch always
+	run Cue_Parse_Functions always
 	run Run_Item always
 
 define sketchpad change_group_to_interval_no_mask
@@ -650,7 +668,7 @@ define sketchpad instructions
 
 define inline_script interval_w_mask_learning_script
 	set description "Executes Python code"
-	set _run "run_masked_learning(instrument_package, interval_package)"
+	set _run "run_masked_learning(instrument_package, interval_masked_package)"
 	set _prepare ""
 
 define sequence interval_w_mask_sequence
@@ -663,12 +681,12 @@ define sequence interval_w_mask_sequence
 
 define inline_script interval_w_mask_test_script
 	set description "Executes Python code"
-	set _run "run_masked_test(instrument_package, interval_package)"
+	set _run "run_masked_test(instrument_package, interval_masked_package)"
 	set _prepare ""
 
 define inline_script interval_wo_mask_learning_script
 	set description "Executes Python code"
-	set _run "run_unmasked_learning(interval_package)"
+	set _run "run_unmasked_learning(interval_unmasked_package)"
 	set _prepare ""
 
 define sequence interval_wo_mask_sequence
@@ -682,7 +700,7 @@ define sequence interval_wo_mask_sequence
 
 define inline_script interval_wo_mask_test_script
 	set description "Executes Python code"
-	set _run "run_unmasked_test(interval_package)"
+	set _run "run_unmasked_test(interval_unmasked_package)"
 	set _prepare ""
 
 define inline_script learning_session_setup
@@ -709,7 +727,7 @@ define inline_script learning_session_setup
 
 define inline_script pitch_w_mask_learning_script
 	set description "Executes Python code"
-	set _run "run_masked_learning(instrument_package, pitch_package)"
+	set _run "run_masked_learning(instrument_package, pitch_masked_package)"
 	set _prepare ""
 
 define sequence pitch_w_mask_sequence
@@ -722,12 +740,12 @@ define sequence pitch_w_mask_sequence
 
 define inline_script pitch_w_mask_test_script
 	set description "Executes Python code"
-	set _run "run_masked_test(instrument_package, pitch_package)"
+	set _run "run_masked_test(instrument_package, pitch_masked_package)"
 	set _prepare ""
 
 define inline_script pitch_wo_mask_learning_script
 	set description "Executes Python code"
-	set _run "run_unmasked_learning(pitch_package)"
+	set _run "run_unmasked_learning(pitch_unmasked_package)"
 	set _prepare ""
 
 define sequence pitch_wo_mask_sequence
@@ -741,28 +759,35 @@ define sequence pitch_wo_mask_sequence
 
 define inline_script pitch_wo_mask_test_script
 	set description "Executes Python code"
-	set _run "run_unmasked_test(pitch_package)"
+	set _run "run_unmasked_test(pitch_unmasked_package)"
 	set _prepare ""
 
 define inline_script save_data
 	set description "Executes Python code"
 	___run__
 	# Write the SlimStampen data to the OpenSesame log file
-	dat = pitch_package.spacing_model.export_data(header_true=True)
-	dat2 = instrument_package.spacing_model.export_data(header_true = False)
-	dat3 = interval_package.spacing_model.export_data(header_true = False)
+	dat = pitch_masked_package.spacing_model.export_data(header_true=True)
+	dat1 = pitch_unmasked_package.spacing_model.export_data(header_true=False)
+	dat2 = interval_masked_package.spacing_model.export_data(header_true = False)
+	dat3 = interval_unmasked_package.spacing_model.export_data(header_true = False)
+	dat4 = instrument_package.spacing_model.export_data(header_true = False)
+	
 	log.write(dat)
+	log.write(dat1)
 	log.write(dat2)
 	log.write(dat3)
+	log.write(dat4)
 	__end__
 	set _prepare ""
 
 define inline_script slimstampen_setup
 	set description "Executes Python code"
 	___run__
-	m = SpacingModel()
+	m_pitch_unmasked = SpacingModel()
+	m_pitch_masked = SpacingModel()
+	m_interval_unmasked = SpacingModel()
+	m_interval_masked = SpacingModel()
 	m_instruments = SpacingModel()
-	m_relative = SpacingModel()
 	__end__
 	___prepare__
 	from __future__ import division
@@ -771,7 +796,7 @@ define inline_script slimstampen_setup
 	from collections import namedtuple
 	
 	Fact = namedtuple("Fact", "fact_id, question, answer")
-	Response = namedtuple("Response", "fact, start_time, rt, correct, condition, mask, test, user_answer")
+	Response = namedtuple("Response", "fact, start_time, rt, correct, condition, mask, test, presented_cue, user_answer")
 	Encounter = namedtuple("Encounter", "activation, time, reaction_time, decay")
 	
 	
