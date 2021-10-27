@@ -1,7 +1,7 @@
 ---
 API: 2.1
 OpenSesame: 3.3.10
-Platform: nt
+Platform: posix
 ---
 set width 1024
 set uniform_coordinates yes
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "C:\\Users\\Gebruiker\\Documents\\University\\User_Models\\Other\\other\\AbsolutePitch-Slimstampen"
+set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -94,8 +94,10 @@ define inline_script Create_Model_Packages
 	    facts_interval_masked, 'interval_masked', 2, rp_parse_cue)
 	interval_unmasked_package = Model_Package(m_interval_unmasked,\
 	    facts_interval_unmasked, 'interval_unmasked', 2, rp_parse_cue)
-	instrument_package = Model_Package(m_instruments,\
-	    facts_instruments, 'instrument')
+	instrument_pitch_package = Model_Package(m_instruments_pitch,\
+	    facts_instruments, 'instrument_pitch')
+	instrument_interval_package = Model_Package(m_instruments_interval,\
+	    facts_instruments, 'instrument_interval')
 	
 	print('')
 	print('facts per condition:')
@@ -103,7 +105,8 @@ define inline_script Create_Model_Packages
 	print('pitch_unmasked:', pitch_unmasked_package.facts, '\n')
 	print('interval_masked:', interval_masked_package.facts, '\n')
 	print('interval_unmasked:', interval_unmasked_package.facts, '\n')
-	print('instrument:', instrument_package.facts, '\n')
+	print('instruments pitch:', instrument_pitch_package.facts, '\n')
+	print('instruments interval:', instrument_interval_package.facts, '\n')
 	__end__
 	set _prepare ""
 
@@ -334,7 +337,15 @@ define inline_script Load_Facts
 			 Fact(7, "harmonica", "harmonica"),
 			 Fact(8, "harp", "harp"),
 			Fact(9, "maraccas", "maraccas"),
-			Fact(10, "piano", "piano")]
+			Fact(10, "piano", "piano"),
+			Fact(11, "saxophone", "saxophone"),
+			Fact(12, "tambourine", "tambourine"),
+			Fact(13, "trumpet", "trumpet"),
+			Fact(14, "tuba", "tuba"),
+			Fact(15, "ukalele", "ukalele"),
+			Fact(16, "violin", "violin"),
+			Fact(17, "xylophone", "xylophone"),
+			Fact(18, "triangle", "triangle")]
 			
 	random.shuffle(facts_instruments)
 	
@@ -379,6 +390,8 @@ define inline_script Load_Facts
 		facts_pitch, len(facts_pitch) // 2)
 	facts_interval_masked, facts_interval_unmasked = get_two_disjoint_sets(\
 		facts_interval, len(facts_interval) // 2)
+	facts_instruments_pitch, facts_instruments_interval = get_two_disjoint_sets(\
+		facts_instruments, len(facts_instruments) // 2)
 	
 	for fact in facts_pitch_masked:
 		m_pitch_masked.add_fact(fact)
@@ -388,8 +401,10 @@ define inline_script Load_Facts
 		m_interval_masked.add_fact(fact)
 	for fact in facts_interval_unmasked:
 		m_interval_unmasked.add_fact(fact)
-	for fact in facts_instruments:
-		m_instruments.add_fact(fact)
+	for fact in facts_instruments_pitch:
+		m_instruments_pitch.add_fact(fact)
+	for fact in facts_instruments_interval:
+		m_instruments_interval.add_fact(fact)
 	__end__
 	set _prepare ""
 
@@ -668,7 +683,7 @@ define sketchpad instructions
 
 define inline_script interval_w_mask_learning_script
 	set description "Executes Python code"
-	set _run "run_masked_learning(instrument_package, interval_masked_package)"
+	set _run "run_masked_learning(instrument_interval_package, interval_masked_package)"
 	set _prepare ""
 
 define sequence interval_w_mask_sequence
@@ -681,7 +696,7 @@ define sequence interval_w_mask_sequence
 
 define inline_script interval_w_mask_test_script
 	set description "Executes Python code"
-	set _run "run_masked_test(instrument_package, interval_masked_package)"
+	set _run "run_masked_test(instrument_interval_package, interval_masked_package)"
 	set _prepare ""
 
 define inline_script interval_wo_mask_learning_script
@@ -727,7 +742,7 @@ define inline_script learning_session_setup
 
 define inline_script pitch_w_mask_learning_script
 	set description "Executes Python code"
-	set _run "run_masked_learning(instrument_package, pitch_masked_package)"
+	set _run "run_masked_learning(instrument_pitch_package, pitch_masked_package)"
 	set _prepare ""
 
 define sequence pitch_w_mask_sequence
@@ -740,7 +755,7 @@ define sequence pitch_w_mask_sequence
 
 define inline_script pitch_w_mask_test_script
 	set description "Executes Python code"
-	set _run "run_masked_test(instrument_package, pitch_masked_package)"
+	set _run "run_masked_test(instrument_pitch_package, pitch_masked_package)"
 	set _prepare ""
 
 define inline_script pitch_wo_mask_learning_script
@@ -770,13 +785,15 @@ define inline_script save_data
 	dat1 = pitch_unmasked_package.spacing_model.export_data(header_true=False)
 	dat2 = interval_masked_package.spacing_model.export_data(header_true = False)
 	dat3 = interval_unmasked_package.spacing_model.export_data(header_true = False)
-	dat4 = instrument_package.spacing_model.export_data(header_true = False)
+	dat4 = instrument_pitch_package.spacing_model.export_data(header_true = False)
+	dat5 = instrument_interval_package.spacing_model.export_data(header_true = False)
 	
 	log.write(dat)
 	log.write(dat1)
 	log.write(dat2)
 	log.write(dat3)
 	log.write(dat4)
+	log.write(dat5)
 	__end__
 	set _prepare ""
 
@@ -787,7 +804,8 @@ define inline_script slimstampen_setup
 	m_pitch_masked = SpacingModel()
 	m_interval_unmasked = SpacingModel()
 	m_interval_masked = SpacingModel()
-	m_instruments = SpacingModel()
+	m_instruments_pitch = SpacingModel()
+	m_instruments_interval = SpacingModel()
 	__end__
 	___prepare__
 	from __future__ import division
