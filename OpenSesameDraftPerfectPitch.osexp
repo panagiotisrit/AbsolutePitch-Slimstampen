@@ -86,8 +86,8 @@ define sequence ClassDefinitions
 define inline_script Create_Model_Packages
 	set description "Executes Python code"
 	___run__
-	pitch_package = Model_Package(m, facts, 'pitch', 2)
-	interval_package = Model_Package(m_relative, facts_relative, 'interval', \
+	pitch_package = Model_Package(m, facts_pitch_masked, 'pitch', 2, pp_parse_cue)
+	interval_package = Model_Package(m_relative, facts_interval_masked, 'interval', \
 	    2, rp_parse_cue)
 	instrument_package = Model_Package(m_instruments, facts_instruments, 'instrument')
 	__end__
@@ -96,6 +96,15 @@ define inline_script Create_Model_Packages
 define inline_script Cue_Parse_Function_Relative_Pitch
 	set description "Executes Python code"
 	___run__
+	import random
+	
+	octave_range_perfect_pitch = (3, 6)
+	
+	def pp_parse_cue(cue):
+	    octave = random.randint(*octave_range_perfect_pitch)
+	    pitch = cue + str(octave)
+	    return pitch
+	
 	mod_interval_to_note = ['c', 'c-', 'd', 'd-', 'e', \
 	    'f', 'f-', 'g', 'g-', 'a', 'a-', 'b']
 	note_to_mod_interval = {note: interval for interval, note \
@@ -128,8 +137,6 @@ define inline_script Cue_Parse_Function_Relative_Pitch
 	
 	range_reference_pitch = (note_to_interval_c0('a2'), \
 	    note_to_interval_c0('a4'))
-	
-	import random
 	
 	def rp_parse_cue(cue):
 	    reference_pitch_i = random.randint(*range_reference_pitch)
@@ -317,38 +324,54 @@ define inline_script Load_Facts
 			
 	random.shuffle(facts_instruments)
 	
-	facts = [Fact(1,"c3", "c"),
-			 Fact(2, "e3", "e"),
-			 Fact(3, "g3", "g"),
-			 Fact(4, "b4", "b"),
-			 Fact(5, "c4", "c")]
+	def get_two_disjoint_sets(original_set, n_items):
+		if n_items > len(original_set) // 2:
+			print('get_two_disjoint_sets(): subset size to big to create two disjoint sets')
+			print('\tsize of input set:', len(original_set))
+			print('\tmaximal size subset:', len(original_set) // 2)
+			print('\tn_items:', n_items)
+			exit(-1)
+		
+		shuffled_original_set = random.sample(original_set, len(original_set))
+		
+		subset_0 = original_set[:n_items]
+		subset_1 = original_set[n_items:2*n_items]
+		
+		return subset_0, subset_1
+		
+		
+	facts_pitch = [Fact(1,"c", "c"),
+			 Fact(2, "c-", "c sharp"),
+			 Fact(3, "d", "d"),
+			 Fact(4, "d-", "e flat"),
+			 Fact(5, "e", "e"),
+			 Fact(6, "f", "f"),
+			 Fact(7, "f-", "f sharp"),
+			 Fact(8, "g", "g"),
+			 Fact(9, "g-", "g sharp"),
+			 Fact(10, "a", "a"),
+			 Fact(11, "a-", "b flat"),
+			 Fact(12, "b", "b")]
 	
-	random.shuffle(facts)
-	
-	# doing this by hand for now (only whole pitches)
-	
-	#interface = UI()
-	#m = Experiment(interface, facts)
-	#minstruments= Experiment(interface, factsinstrument)
-	#mRelative = Experiment(interface, 'namedIntervals.csv')
-	
-	
-	
-	facts_relative = []
+	facts_interval = []
 	
 	with open(pool['namedIntervals.csv']) as f:
 		lines = f.readlines()
 		for i, line in enumerate(lines[1:]):
 			cells = line.strip().split(',')
-			facts_relative.append(Fact(i, int(cells[1]), str(cells[2]).lower()))
+			facts_interval.append(Fact(i, int(cells[1]),\
+				str(cells[2]).lower()))
 	
-	random.shuffle(facts_relative)
+	facts_pitch_masked, fact_pitch_unmasked = get_two_disjoint_sets(\
+		facts_pitch, len(facts_pitch) // 2)
+	facts_interval_masked, fact_pitch_unmasked = get_two_disjoint_sets(\
+		facts_interval, len(facts_interval) // 2)
 	
-	for fact in facts:
+	for fact in facts_pitch_masked:
 		m.add_fact(fact)
 	for fact in facts_instruments:
 		m_instruments.add_fact(fact)
-	for fact in facts_relative:
+	for fact in facts_interval_masked:
 		m_relative.add_fact(fact)
 	__end__
 	set _prepare ""
