@@ -1,7 +1,7 @@
 ---
 API: 2.1
 OpenSesame: 3.3.10
-Platform: posix
+Platform: nt
 ---
 set width 1024
 set uniform_coordinates yes
@@ -26,7 +26,7 @@ set font_size 18
 set font_italic no
 set font_family mono
 set font_bold no
-set experiment_path "/Users/ludivanleeuwen/github/AbsolutePitch-Slimstampen"
+set experiment_path "C:/Users/Panos/Desktop/usermodelsactual/AbsolutePitch-Slimstampen"
 set disable_garbage_collection yes
 set description "The main experiment item"
 set coordinates uniform
@@ -757,7 +757,7 @@ define inline_script learning_session_setup
 	var.trial_num = 1
 	
 	# Settings
-	var.session_duration = 5000
+	var.session_duration = 480000
 	var.feedback_duration = 800
 	var.inter_trial_interval = 200
 	
