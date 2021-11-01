@@ -3,11 +3,14 @@ library(viridis)
 library(reshape2)
 library(dplyr)
 library(ggplot2)
+library("gridExtra")
+
 
 
 # load all the subject csv into the temp list
 temp = list.files(pattern="*.csv")
 
+temp
 # iterate over the temp list to get all
 # subjects into one dataframe,
 # adding a subject number (based on order of file in list: anonymous)
@@ -39,6 +42,46 @@ summary(resTest.aov)
 
 # test for multiple comparisons, is necessary
 TukeyHSD(resTest.aov)
+
+
+# ############## ############## ############## ############## ############## #############
+
+# check if some items are more difficult than others (should analyse separately)
+# based on actual starting note (going across the octave).
+
+# from these plots we can see that pitch is terrible, c is slightly more correct?
+# instruments are easy
+# and tritone + minor second are done easily as well
+
+aggregate( correct ~ answer, test_data, mean)
+
+# filter based on instrument, single note or interval
+
+pitch <- filter(test_data, condition == "pitch_masked" | condition == "pitch_unmasked")
+interval <- filter(test_data, condition == "interval_masked" | condition == "interval_unmasked")
+instrument <- filter(test_data, condition == "instrument_pitch" | condition == "instrument_interval")
+
+p<-ggplot(data=aggregate( correct ~ answer, pitch, mean), aes(x=answer, y=correct)) +
+  geom_bar(stat="identity") + expand_limits(y=c(0, 1))
+p1 <- p + coord_flip()
+
+p<-ggplot(data=aggregate( correct ~ answer, interval, mean), aes(x=answer, y=correct)) +
+  geom_bar(stat="identity")
+p2 <- p + coord_flip()
+
+p<-ggplot(data=aggregate( correct ~ answer, instrument, mean), aes(x=answer, y=correct)) +
+  geom_bar(stat="identity")
+p3 <- p + coord_flip()
+
+grid.arrange(p1, p2, p3)
+
+
+
+########### something with alpha ###########
+
+
+
+
 
 
 # TODO:
