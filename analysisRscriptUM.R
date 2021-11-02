@@ -85,8 +85,14 @@ grid.arrange(p1, p2, p3)
 
 
 
-########### something with alpha ###########
-
+########### plotting alpha over time! ###########
+average_alpha <- aggregate( alpha ~ trial*condition, data, mean)
+ggplot(data=average_alpha, aes(x=trial,
+                      y= alpha,
+                      group=condition)) +
+  facet_grid(condition ~.) + 
+  geom_line(aes(color=condition)) + 
+  geom_point(aes(color=condition))
 
 
 
