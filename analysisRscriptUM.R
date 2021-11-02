@@ -56,21 +56,29 @@ TukeyHSD(resTest.aov)
 aggregate( correct ~ answer, test_data, mean)
 
 # filter based on instrument, single note or interval
-
 pitch <- filter(test_data, condition == "pitch_masked" | condition == "pitch_unmasked")
 interval <- filter(test_data, condition == "interval_masked" | condition == "interval_unmasked")
 instrument <- filter(test_data, condition == "instrument_pitch" | condition == "instrument_interval")
 
 p<-ggplot(data=aggregate( correct ~ answer, pitch, mean), aes(x=answer, y=correct)) +
-  geom_bar(stat="identity") + expand_limits(y=c(0, 1))
+  geom_bar(stat="identity") + 
+  expand_limits(y=c(0, 1)) + 
+  geom_errorbar(aes(ymin = correct - aggregate(correct ~ answer, pitch, sd)$correct ,
+                    ymax = correct + aggregate(correct ~ answer, pitch, sd)$correct))
 p1 <- p + coord_flip()
 
 p<-ggplot(data=aggregate( correct ~ answer, interval, mean), aes(x=answer, y=correct)) +
-  geom_bar(stat="identity")
+  geom_bar(stat="identity") + 
+  geom_errorbar(aes(ymin = correct - aggregate(correct ~ answer, interval, sd)$correct ,
+                    ymax = correct + aggregate(correct ~ answer, interval, sd)$correct))
+
 p2 <- p + coord_flip()
 
 p<-ggplot(data=aggregate( correct ~ answer, instrument, mean), aes(x=answer, y=correct)) +
-  geom_bar(stat="identity")
+  geom_bar(stat="identity") + 
+  geom_errorbar(aes(ymin = correct - aggregate(correct ~ answer, instrument, sd)$correct , 
+                    ymax = correct + aggregate(correct ~ answer, instrument, sd)$correct))
+
 p3 <- p + coord_flip()
 
 grid.arrange(p1, p2, p3)
